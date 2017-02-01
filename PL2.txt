@@ -1,0 +1,26 @@
+# Poisson-logormal model
+model
+	{
+		for (i in 1 : N)
+
+		{ # Poisson likelihood for observed counts
+			O[i] ~ dpois(mu[i])
+			log(mu[i]) <- log(E[i]) + alpha + alpha2*agglo[i] + H[i]
+		# Heterogeneity random effects
+			H[i] ~ dnorm(alpha, v.inv) # hierarchical centring
+		# Relative risks
+			RR[i] <- exp(alpha + H[i])
+		}
+
+		# Vague prior distribution for intercept, agglo
+			alpha ~ dnorm(0.0, 1.0E-6)
+			alpha2 ~ dnorm(0.0, 1.0E-6)
+
+		# Hyperprior distibutions on inverse variance parameter
+			v.inv ~ dgamma(0.0001, 0.0001)
+			v <- 1/v.inv
+	}
+
+# inits
+list(alpha = 0.20, alpha2 = -0.30, v.inv = 700)
+list(alpha = 0.30, alpha2 = -0.20, v.inv = 800)

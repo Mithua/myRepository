@@ -1,0 +1,27 @@
+# Poisson-gamma model
+model
+	{
+		for (i in 1 : N)
+
+			{ # Poisson likelihood for observed counts
+				O[i] ~ dpois(mu[i])
+				mu[i] <- E[i]*theta[i]
+			# Relative Risks
+				theta[i] ~ dgamma(alpha, beta)
+				RR[i] <- mu[i]/E[i]
+			# Shrinkage factor
+				C[i] <- E[i]/(variance + E[i])
+			}
+
+			# Vague prior distributions
+				alpha ~ dexp(1)
+				beta ~ dexp(1)
+
+			# Additional estimates
+			mean <- alpha/beta
+			variance <- alpha/pow(beta, 2)
+	}
+
+# inits
+list(alpha = 15, beta = 15)
+list(alpha = 12, beta = 12)
