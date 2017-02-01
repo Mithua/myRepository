@@ -1,0 +1,33 @@
+# Conditional-autoregressive model
+model
+	{
+		for (i in 1 : N)
+
+		{ # Poisson likelihood for observed counts
+			O[i] ~ dpois(mu[i])
+			log(mu[i]) <- log(E[i]) + alpha + alpha2*agglo[i] +u[i] + v[i]
+		# Heterogeneity random effects
+			v[i] ~ dnorm(alpha, tau.v) # hierarchical centring
+		# Relative risks
+			RR[i] <- exp(alpha + u[i] + v[i])
+		}
+
+		# CAR prior distribution for spatial random effects
+			u[1 : N] ~ car.normal(adj[], weights[], num[], tau.u)
+			for(k in 1 : sumNumNeigh)
+			{
+				weights[k] <- 1
+			}
+
+		# Other priors
+			alpha ~ dnorm(0.0, 1.0E-6)
+			alpha2 ~ dnorm(0.0, 1.0E-6)
+			tau.u ~ dgamma(0.0001, 0.0001)
+			tau.v ~ dgamma(0.0001, 0.0001)
+			sigma2.v <- 1 / tau.v
+			sigma2.u <- 1 / tau.u
+	}
+
+# inits
+list(alpha = 0.20, alpha2 = -0.30, tau.u = 650, tau.v = 750)
+list(alpha = 0.30, alpha2 = -0.20, tau.u = 700, tau.v = 800)
