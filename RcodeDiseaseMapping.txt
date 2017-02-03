@@ -1,0 +1,65 @@
+########## R script: BRugsRonly ##########
+
+# For illustration of BRugs-based analysis
+# with a single R script
+
+# Load the BRugs package:
+
+library(BRugs)
+
+# Read in Data
+
+O <- c(7,5,14,7,6,7,1,7,18,28,7,1,6,3,35,4,3,7,1,8,7,8,3,4,8,10,9,6,12,18,8,6,2,2,5,7,2,38,4,19,0,2,6,2)
+
+E <- c(4.95231594,3.24295793,17.26544069, 13.43394197,5.21890544,5.07900989,6.49513618,7.70019085,8.18755736 ,27.64827573,3.83003324,4.04013184,4.24445619,
+6.18422711,33.88441849,4.86282761,3.30454706,5.38231503,0.04507988,12.94115683,4.19609470 ,12.25053877,5.10499997,3.61013199,11.08898811,6.40977329,
+13.64677772,6.25565921,10.51907792, 15.81808815,5.24642830,6.91281219,3.07944309,3.87065580,5.66966228,6.43493585,7.37137898, 18.83713982,7.23314671,
+14.87921939,1.96617237,3.11071411,8.58739788,2.95783813)
+
+N<-length(O)
+
+# Specify the model and write to a file using writeModel():
+
+PoissonGammaModel <- function()
+{
+			  for (i in 1 :N) {
+		      O[i]        ~ dpois(mu[i])
+		      log(mu[i]) <- log(E[i]) + log(theta[i])
+		      theta[i]  ~ dgamma(alpha,beta)
+		      SMRhat[i]<-mu[i]/E[i]
+		      RR[i]<-mu[i]/E[i]
+		   }
+          alpha ~ dexp(1)
+		      beta~dgamma(0.1,0.1)
+}
+
+modelFileName <- file.path(getwd(),"PoissonGammaModel.txt")
+writeModel(PoissonGammaModel,modelFileName)
+
+
+# Use BRugsFit() to obtain MCMC sample:
+parInit <- list(list(theta=rep(1,N),alpha=1,beta=1))
+allData <- list(N=N,O=O,E=E)
+BRugsFit(data=allData,inits=parInit,parametersToSave=c("alpha","beta","theta"),nBurnin=5000,
+          nIter=50000,modelFile="PoissonGammaModel.txt",numChains=1)
+
+alphaMCMC <- samplesSample("alpha")
+betaMCMC <- samplesSample("beta")
+thetaMCMC <- samplesSample("theta[1]")
+for (j in 2:N) thetaMCMC <- rbind(thetaMCMC,samplesSample(paste("theta[",j,"]")))
+
+
+
+
+# Plot the results:
+
+plot(alphaMCMC,type="l",col="DarkMagenta",axes=FALSE,ylab="alpha")
+axis(1,col="green4",col.axis="red") ; axis(2,col="green4",col.axis="red")
+
+plot(betaMCMC,type="l",col="DarkMagenta",axes=FALSE,ylab="beta")
+axis(1,col="green4",col.axis="red") ; axis(2,col="green4",col.axis="red")
+
+plot(thetaMCMC[1,],type="l",col="DarkMagenta",axes=FALSE,ylab="theta[1]")
+axis(1,col="green4",col.axis="red") ; axis(2,col="green4",col.axis="red")
+
+########## End of BRugsRonly ##########
