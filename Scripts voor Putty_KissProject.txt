@@ -1,0 +1,22 @@
+### Basic commands for ec2 instance update & get necessary tools:
+
+[ec2-user@ip-10-0-100]$ sudo yum update
+[ec2-user@ip-10-0-100]$ sudo yum groupinstall "Development Tools"
+
+
+### Copy files from my s3 bucket to ec2 instance:
+
+#!/bin/bash
+[ec2-user@ip-10-0-100]$ aws s3 sync s3://mithuarbalti/KissProject/ /home/ec2-user/KissProject/ --acl public-read --region eu-central-1
+# [ec2-user@ip-10-0-100]$ aws s3 sync s3://mithuarbalti/KissProject/ . --region eu-central-1
+# [ec2-user@ip-10-0-100]$ aws s3 sync s3://<source> <target> -- acl <my ACL> --region <my subnet region with AZ>
+[ec2-user@ip-10-0-100]$ cd KissProject
+[ec2-user@ip-10-0-100]$ mkdir Resultats
+[ec2-user@ip-10-0-100]$ g++ -std=c++11 ./*.cpp -o PROG
+[ec2-user@ip-10-0-100]$ chmod +x PROG
+[ec2-user@ip-10-0-100]$ ./PROG --path ./
+
+
+### Send files from ec2 instance to s3 bucket:
+
+[ec2-user@ip-10-0-100]$ aws s3 sync /home/ec2-user/KissProject/Resultats/ s3://mithuarbalti/KissProject/Resultats/ --acl public-read --region eu-central-1
