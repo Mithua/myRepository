@@ -1,0 +1,45 @@
+# reading data
+gina<-read.table("C:\\Documents and Settings\\sbanerjee\\My Documents\\Mit\\Thesis MASS\\Gina\\Data\\Actimetry_LDA_Gina.txt",header=T,sep="")
+
+# creating mean activity variable
+gina$MeanActivity<-with(gina,(N1+N2+N3+N4+N5+N6+N7+N8)/8)
+
+library(MASS)
+gina.gamma<-glm(MeanActivity~Group*Depress+ADL,family=Gamma(log),data=gina)
+summary(gina.gamma)
+pchisq(c(19.746),df=28,lower.tail=FALSE)
+--------------------------------------------------------------------------------
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)     6.7769     0.6425  10.548 2.93e-11 ***
+Group           1.4642     0.4763   3.074  0.00468 ** 
+Depress         1.1455     0.5559   2.060  0.04876 *  
+ADL            -0.2471     0.1020  -2.421  0.02220 *  
+Group:Depress  -1.3940     0.6541  -2.131  0.04199 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+(Dispersion parameter for Gamma family taken to be 0.6100153)
+
+    Null deviance: 32.302  on 32  degrees of freedom
+    Residual deviance: 19.746  on 28  degrees of freedom (GOF, p=0.8735464)
+    (12 observations deleted due to missingness)
+AIC: 534.88
+--------------------------------------------------------------------------------
+No outlier
+No multicollinearity
+No influential point
+--------------------------------------------------------------------------------
+predicted<-as.table(gina.gamma$fitted.values)
+predicted<-as.data.frame(predicted)
+gina.33<-gina[-c(1,5,6,17,22,26,32,34,36,40,43,45),]
+fit.gina<-cbind(gina.33,predicted)
+library(rgl)
+library(grid)
+library(lattice)
+library(nnet)
+library(car)
+library(relimp)
+library(Rcmdr)
+scatter3d(fit.gina$ADL,fit.gina$Freq,fit.gina$MMSE,fit="smooth",residuals="squares",bg="white",axis.scales=TRUE,grid=TRUE,ellipsoid=FALSE,xlab="ADL",ylab="Predicted",zlab="MMSE",revolutions=20)
+# "MMSE" is replaces "Group" (actually in the fitted model), because the 3-D image in R doesn't accept binary data, unlike in SAS, where imaginary intermediate values are created between 1 and 0.  This model is adjusted for depressed status and interaction term.

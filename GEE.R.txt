@@ -1,0 +1,35 @@
+# reading data (B&D computer)
+aw<-read.table("C:\\Documents and Settings\\sbanerjee\\My Documents\\Mit\\Thesis MASS\\Gina\\Data\\Actimetry_LDA_Gina.txt",header=TRUE,sep="")
+
+# loading libraries
+library(MASS)
+library(geepack)
+
+# creating subject identifier as class variable
+aw$subject<-factor(rownames(aw))
+
+# removing missing data from Depress variable and selecting subset
+aw<-na.omit(aw[,c("N1","N2","N3","N4","N5","N6","N7","N8","Depress","Group","MMSE","ADL","Patient","subject")])
+
+# transforming wide form data to long form
+al<-reshape(aw,idvar="subject",v.names="activity",timevar="time",varying=list(c("N1","N2","N3","N4","N5","N6","N7","N8")),direction="long")
+
+
+# models ???
+al.geepack.ex<-geeglm(activity~time+Group*Depress+ADL,id=subject,data=al,family=poisson("log"),corstr="ex")
+summary(al.geepack.ex)
+coef.geepack.ex<-coef(al.geepack.ex)
+exp(coef.geepack.ex)
+
+al.geepack.ind<-geeglm(activity~time+Group*Depress+ADL,id=subject,data=al,family=poisson("log"),corstr="ind")
+summary(al.geepack.ind)
+coef.geepack.ind<-coef(al.geepack.ind)
+exp(coef.geepack.ind)
+
+al.geepack.ar<-geeglm(activity~time+Group*Depress+ADL,id=subject,data=al,family=poisson("log"),corstr="ar")
+summary(al.geepack.ar)
+coef.geepack.ar<-coef(al.geepack.ar)
+exp(coef.geepack.ar)
+
+anova(al.geepack.ind,al.geepack.ex,al.geepack.ar)
+### Models are identical

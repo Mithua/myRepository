@@ -1,0 +1,86 @@
+library(MASS)
+# reading data
+gina<-read.table("C:\\Documents and Settings\\sbanerjee\\Desktop\\UCB\\Actimetry_LDA_Gina.txt",header=T,sep="")
+
+# correlations between nights' activity
+scatterplot.matrix(~N1+N2+N3+N4+N5+N6+N7+N8,reg.line=lm,smooth=TRUE,span=0.5,diagonal='density',data=gina)
+
+# creating mean activity variable
+gina$MeanActivity<-with(gina,(N1+N2+N3+N4+N5+N6+N7+N8)/8)
+
+# correlations between outcome and continuous predictor variables
+scatterplot.matrix(~ADL+MeanActivity+MMSE+Weight,reg.line=lm,smooth=TRUE,span=0.5,diagonal='density',data=gina)
+
+# converting variables to factor
+gina$Group<-factor(gina$Group,labels=c('Normal','Cognitively impaired'))
+gina$Depress<-factor(gina$Depress,labels=c('Normal','Depressed'))
+gina$Disable<-factor(gina$Disable,labels=c('Normal','Disabled'))
+gina$ADD<-factor(gina$ADD,labels=c('No','Yes'))
+gina$HSD<-factor(gina$HSD,labels=c('No','Yes'))
+gina$NLD<-factor(gina$NLD,labels=c('No','Yes'))
+gina$Prosthe<-factor(gina$Prosthe,labels=c('No','Yes'))
+gina$Continence<-factor(gina$Continence,labels=c('Incontinent','Partially continent','Continent'))
+gina$Gina<-factor(gina$Gina,labels=c('Soutrik','Gina'))
+
+# boxplots for mean activity by groups
+par(mfrow=c(3,3))
+boxplot(MeanActivity~Group,ylab="MeanActivity",xlab="Group",data=gina)
+boxplot(MeanActivity~Depress,ylab="MeanActivity",xlab="Geriatric Depression Scale",data=gina)
+boxplot(MeanActivity~Disable,ylab="MeanActivity",xlab="Activities of Daily Living",data=gina)
+boxplot(MeanActivity~ADD,ylab="MeanActivity",xlab="Antidepressants",data=gina)
+boxplot(MeanActivity~HSD,ylab="MeanActivity",xlab="Hypnotic-Sedative drugs",data=gina)
+boxplot(MeanActivity~NLD,ylab="MeanActivity",xlab="Neuroleptic drugs",data=gina)
+boxplot(MeanActivity~Prosthe,ylab="MeanActivity",xlab="Prosthesis",data=gina)
+boxplot(MeanActivity~Continence,ylab="MeanActivity",xlab="Continence",data=gina)
+boxplot(MeanActivity~Gina,ylab="MeanActivity",xlab="Gina",data=gina)
+
+# interaction plot: depression by group
+plotMeans(fit.gina$MeanActivity,fit.gina$Depress_group,fit.gina$Cognitive_group,error.bars="conf.int",level=0.95,xlab="Depressed status",ylab="Mean nocturnal activity",main="Interaction 'depressed X cognitive'",legend="Cognitive status")
+
+# interaction formal test: depression by group
+NB.interaction<-glm(MeanActivity~Depress*Group,family=negative.binomial(2),data=gina)
+summary(NB.interaction)
+pchisq(c(45.662),df=29,lower.tail=FALSE)
+-------------------------------------------------------------------------------------------------------
+Coefficients:
+                                                   Estimate Std. Error t-value p-value
+(Intercept)                                          5.5127     0.4088  13.486 5.05e-14 ***
+Depress[T.Depressed]                                 1.2309     0.5773   2.132 0.041577 *  
+Group[T.Cognitively impaired]                        2.0016     0.4597   4.354 0.000152 ***
+Depress[T.Depressed]:Group[T.Cognitively impaired]  -1.6288     0.6663  -2.445 0.020813 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+(Dispersion parameter for Negative Binomial(2) family taken to be 1.326113)
+
+    Null deviance: 64.445  on 32  degrees of freedom
+    Residual deviance: 45.662  on 29  degrees of freedom (GOF, p=0.02534495)
+    (12 observations deleted due to missingness)
+AIC: 537.22
+-------------------------------------------------------------------------------------------------------
+GAMMA.interaction<-glm(MeanActivity~Depress*Group,family=Gamma(log),data=gina)
+summary(GAMMA.interaction)
+pchisq(c(22.886),df=29,lower.tail=FALSE)
+-------------------------------------------------------------------------------------------------------
+Coefficients:
+                                                   Estimate Std. Error t-value p-value
+(Intercept)                                          5.5127     0.4075  13.529 4.66e-14 ***
+Depress[T.Depressed]                                 1.2309     0.5762   2.136 0.041234 *  
+Group[T.Cognitively impaired]                        2.0016     0.4586   4.365 0.000147 ***
+Depress[T.Depressed]:Group[T.Cognitively impaired]  -1.6288     0.6654  -2.448 0.020658 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+
+(Dispersion parameter for Gamma family taken to be 0.6641018)
+
+    Null deviance: 32.302  on 32  degrees of freedom
+    Residual deviance: 22.886  on 29  degrees of freedom (GOF, p=0.7817343)
+    (12 observations deleted due to missingness)
+AIC: 538.25
+-------------------------------------------------------------------------------------------------------
+Q1. Why AIC of Gamma model is slightly higher, although its GOF is far better (p-value) ?
+Q2. Why null & residual deviances, & dispersion parameter of Gamma model are half, but parms, SEs are similar ?
+
+
+
+

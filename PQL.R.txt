@@ -1,0 +1,64 @@
+# reading data (B&D computer)
+aw<-read.table("C:\\Documents and Settings\\sbanerjee\\My Documents\\Mit\\Thesis MASS\\Gina\\Data\\Actimetry_LDA_Gina.txt",header=TRUE,sep="")
+
+# loading libraries
+library(MASS)
+library(nlme)
+library(mvnormtest)
+
+# creating subject identifier as class variable
+aw$subject<-factor(rownames(aw))
+
+# removing missing data from Depress variable and selecting subset
+aw<-na.omit(aw[,c("N1","N2","N3","N4","N5","N6","N7","N8","Depress","Group","MMSE","ADL","Patient","subject")])
+
+# transforming wide form data to long form
+al<-reshape(aw,idvar="subject",v.names="activity",timevar="time",varying=list(c("N1","N2","N3","N4","N5","N6","N7","N8")),direction="long")
+
+
+# models
+# Poisson
+al.glmmPQL.rs.poi<-glmmPQL(activity~time+Group*Depress+ADL,random=~time|subject,data=al,family=poisson)
+summary(al.glmmPQL.rs.poi)
+coef.glmmPQL.rs.poi<-coef(al.glmmPQL.rs.poi)
+exp(coef.glmmPQL.rs.poi)
+predict(al.glmmPQL.rs.poi)
+
+# residuals analysis Poisson
+resid.glmmPQL.rs.poi<-resid(al.glmmPQL.rs.poi)
+RESID.glmmPQL.rs.poi<-matrix(resid.glmmPQL.rs.poi, nrow=33, ncol=8) # for boxplot of residuals vs. time
+RESIDUALS.long.poi<-matrix(resid.glmmPQL.rs.poi)
+al$residuals.rs.poi<-RESIDUALS.long.poi # note: the "residuals" stays as matrix class object inside the "al" data.frame class object
+par(cex=0.6)
+attach(al)
+interaction.plot(time,factor(Group),residuals.rs.poi,lty=c(1,12),ylab="RESIDUALS",xlab="TIME",lwd=2,trace.label="GROUP",main="Mean of residuals (by group) against time")
+mean(residuals[Group==1])
+mean(residuals[Group==0])
+detach(al)
+mshapiro.test(t(RESID.glmmPQL.rs.poi))
+boxplot(data.frame(RESID.glmmPQL.rs.poi),xlab="Nights",ylab="Residuals")
+pairs(RESID.glmmPQL.rs.poi)
+cor(RESID.glmmPQL.rs.poi)
+
+# negative binomial
+al.glmmPQL.rs.nb<-glmmPQL(activity~time+Group*Depress+ADL,random=~time|subject,data=al,family=negative.binomial(theta=2.02))
+summary(al.glmmPQL.rs.nb)
+coef.glmmPQL.rs.nb<-coef(al.glmmPQL.rs.nb)
+exp(coef.glmmPQL.rs.nb)
+predict(al.glmmPQL.rs.nb)
+
+# residuals analysis negative binomial
+resid.glmmPQL.rs.nb<-resid(al.glmmPQL.rs.nb)
+RESID.glmmPQL.rs.nb<-matrix(resid.glmmPQL.rs.nb, nrow=33, ncol=8) # for boxplot of residuals vs. time
+RESIDUALS.long.nb<-matrix(resid.glmmPQL.rs.nb)
+al$residuals.rs.nb<-RESIDUALS.long.nb # note: the "residuals" stays as matrix class object inside the "al" data.frame class object
+par(cex=0.6)
+attach(al)
+interaction.plot(time,factor(Group),residuals.rs.nb,lty=c(1,12),ylab="RESIDUALS",xlab="TIME",lwd=2,trace.label="GROUP",main="Mean of residuals (by group) against time")
+mean(residuals[Group==1])
+mean(residuals[Group==0])
+detach(al)
+mshapiro.test(t(RESID.glmmPQL.rs.nb))
+boxplot(data.frame(RESID.glmmPQL.rs.nb),xlab="Nights",ylab="Residuals")
+pairs(RESID.glmmPQL.rs.nb)
+cor(RESID.glmmPQL.rs.nb)

@@ -1,0 +1,24 @@
+# loading libraries
+library(coda)
+library(lattice)
+library(colorspace)
+library(lme4)
+library(Matrix)
+
+# loading main library
+library(mixAK)
+
+# data entry
+mean.activity<-c(816.875,369.625,603,279.75,3169.25,648.5,261.625,100,931.5,286.5,944,4066.25,326.5,584.875,1141,574.125,875.375,569.75,3980.375,175.875,3537.625,273.125,1785.875,469.375,277.875,1910.125,2001.625,3185.375,673.625,2900.5,4358.375,1854.5,285)
+
+# prior
+mean.activity.prior<-list(priorK="fixed",Kmax=2,delta=1,priormuQ="independentC",zeta=2,g=0.2)
+
+# MCMC
+mean.activity.model<-NMixMCMC(y0=mean.activity,prior=mean.activity.prior,nMCMC=c(burn=10000,keep=20000,thin=1,info=10000),PED=TRUE)
+
+# outputs
+print(mean.activity.model)
+mean.activity.PDens<-NMixPredDensMarg(mean.activity.model[[1]])
+plot(mean.activity.PDens,main="Posterior density",xlab="Mean Activity (sec.)",lwd=2,lty=2,col="blue")
+

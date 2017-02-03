@@ -1,0 +1,85 @@
+# loading libraries
+library(grid)
+library(colorspace)
+library(MASS)
+library(vcd)
+library(stats)
+
+# reading data (all 45 subjects)
+gf.poi<-read.table("C:\\Documents and Settings\\sbanerjee\\My Documents\\Mit\\Thesis MASS\\Gina\\Data\\Actimetry_LDA_Gina.txt",header=TRUE,sep="")
+
+# creating mean activity variable
+gf.poi$MeanActivity<-with(gf.poi,(N1+N2+N3+N4+N5+N6+N7+N8)/8)
+
+# creating 2 datasubsets for 2 exposure groups
+non.demented<-subset(gf.poi,Group==0)
+demented<-subset(gf.poi,Group==1)
+
+# calculating n(=rate,beta,b,lambda,scale) parameters for 2 gamma distributions
+length(non.demented$MeanActivity)
+length(demented$MeanActivity)
+
+# calculating sum(=alpha,a,s,shape) parameters for 2 gamma distributions
+sum(non.demented$MeanActivity)
+sum(demented$MeanActivity)
+
+###simulating 2 gamma distributions
+par(mfrow=c(2,2))
+non.demented.gam<-rgamma(500,4513.75,9)
+mean.non.demented.gam<-mean(non.demented.gam)
+var.non.demented.gam<-var(non.demented.gam)
+lambda.non.demented.gam<-mean.non.demented.gam/var.non.demented.gam # check
+alpha.non.demented.gam<-((mean.non.demented.gam)^2)/var.non.demented.gam # check
+fitdistr(non.demented.gam,"gamma") # MLE fitting check
+plot(density(non.demented.gam)) # empirical PDF
+non.demented.ecdf<-ecdf(non.demented.gam)
+plot(non.demented.ecdf) # empirical CDF
+
+demented.gam<-rgamma(500,50338.38,35)
+mean.demented.gam<-mean(demented.gam)
+var.demented.gam<-var(demented.gam)
+lambda.demented.gam<-mean.demented.gam/var.demented.gam # check
+alpha.demented.gam<-((mean.demented.gam)^2)/var.demented.gam # check
+fitdistr(demented.gam,"gamma") # MLE fitting check
+plot(density(demented.gam)) # empirical PDF
+demented.ecdf<-ecdf(demented.gam)
+plot(demented.ecdf) # empirical CDF
+
+mean(demented.gam>non.demented.gam)
+
+# Bayesian plotting
+theta<-seq(from=0,to=1500,length=5000)
+a<-2 # gamma(2,1) prior
+b<-1 # gamma(2,1) prior
+n2<-9
+s2<-4513.75
+n1<-35
+s1<-50338.38
+
+# plotting 2 "posterior" gamma distributions of the parameters
+plot(theta,dgamma(theta,a+s2,b+n2),type="l",lwd=2,ylab="Density",xlab=expression(theta),ylim=c(0,0.08))
+lines(theta,dgamma(theta,a+s1,b+n1),type="l",lwd=2,col="red",lty=2)
+mtext("Distribution of the posterior parameters of mean nocturnal activity (by exposure group)")
+
+# calculating 2 "posterior" medians, 95% credible intervals (gamma distributions)
+qgamma(c(0.025,0.50,0.975),a+s2,b+n2)
+qgamma(c(0.025,0.50,0.975),a+s1,b+n1)
+
+theta.non.demented<-rgamma(500,a+s2,b+n2)
+theta.demented<-rgamma(500,a+s1,b+n1)
+mean(theta.demented>theta.non.demented)
+
+# plotting 2 "posterior" predictive (= negative binomial) distributions
+y<-(0:2500)
+plot(y-0.1,dnbinom(y,size=(a+n2),mu=(a+s2)/(b+n2)),col="blue",type="h",lwd=2,ylab="Density",xlab=expression(paste(italic(y[n+1]))))
+points(y+0.1,dnbinom(y,size=(a+n1),mu=(a+s1)/(b+n1)),col="orange",type="h",lwd=2)
+mtext("Posterior predictive (negative binomial) distributions of mean nocturnal activity (by exposure group)")
+
+# calculating 2 "posterior" medians, 95% credible intervals (posterior predictive (= negative binomial) distributions)
+qnbinom(c(0.025,0.50,0.975),size=(a+s2),mu=(a+s2)/(b+n2))
+qnbinom(c(0.025,0.50,0.975),size=(a+s1),mu=(a+s1)/(b+n1))
+
+y.non.demented<-rnbinom(500,size=(a+n2),mu=(a+s2)/(b+n2))
+y.demented<-rnbinom(500,size=(a+n1),mu=(a+s1)/(b+n1))
+mean(y.demented>y.non.demented)
+

@@ -1,0 +1,68 @@
+gina<-read.table("C:\\Documents and Settings\\Soutrik Banerjee\\My documents\\Mit\\Thesis MASS\\Gina\\Data\\gina.timetrend.txt",header=TRUE,sep="")
+library(Rcmdr)
+
+library(mgcv)
+library(lattice)
+
+gina.tt.eda<-xyplot(dur.min~date,data=gina,type=c('p','smooth'))
+print(gina.tt.eda)
+
+gina[25,3]<-gina[25,3]+0.001 # Gamma distribution>0
+model1<-gam(dur.min~s(date),data=gina,family=Gamma(link=log))
+anova(model1)
+plot(model1)
+plot(model1,shade=T)
+
+preds<-predict(model1,se=T,type="response")
+gina$fitted<-preds$fit
+gina$lcl<-preds$fit-(2*preds$se.fit)
+gina$ucl<-preds$fit+(2*preds$se.fit)
+gina$cyclic.trend<-gina$mov.avg.3by3/gina$fitted
+trellis.device(theme="col.whitebg",width=5,height=4.5)
+fit.plot<-xyplot(dur.min+fitted+lcl+ucl~date,data=gina,type=c('p','l','l','l'),
+ylab="nocturnal activity",
+panel=function(x,y){
+ntimes<-length(x)/4
+l1<-1:ntimes
+l2<-(ntimes+1):(2*ntimes)
+l3<-(2*ntimes+1):(3*ntimes)
+l4<-(3*ntimes+1):(4*ntimes)
+panel.xyplot(x[l1],y[l1])
+panel.xyplot(x[l2],y[l2],type='l')
+panel.xyplot(x[l3],y[l3],type='l',lty=2)
+panel.xyplot(x[l4],y[l4],type='l',lty=2)
+}
+)
+print(fit.plot)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# The mgcv library fits Generalised Additive Models using generalised cross validation.
+
+# dwtest(dur.min ~ date2, alternative="greater", data=gina)
+#       Durbin-Watson test
+# data:  dur.min ~ date2
+# DW = 1.8088, p-value = 0.1726
+# alternative hypothesis: true autocorrelation is greater than 0
+# IMPLIES THAT AUTOCORRELATION IS NOT SIGNIFICANT BETWEEN SUCCESSIVE MEASURES
+
+
+# bptest(dur.min ~ date2, varformula = ~ fitted.values(square.model.1), studentize=FALSE, data=gina)
+#       Breusch-Pagan test
+# data:  dur.min ~ date2
+# BP = 1.4499, df = 1, p-value = 0.2285
+# IMPLIES THAT NO HETEROGENEITY OF VARIANCE

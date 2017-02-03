@@ -1,0 +1,167 @@
+# reading data
+fmm<-read.table("C:\\Documents and Settings\\sbanerjee\\My Documents\\Mit\\Thesis MASS\\Gina\\Data\\Actimetry_LDA_Gina.txt",header=T,sep="")
+
+# creating mean activity variable
+fmm$MeanActivity<-with(fmm,(N1+N2+N3+N4+N5+N6+N7+N8)/8)
+
+# eliminating missing depressed status subjects
+fmm<-fmm[-c(1,5,6,17,22,26,32,34,36,40,43,45),]
+
+
+# loading libraries
+library(lattice)
+library(stats4)
+library(modeltools)
+library(mvtnorm)
+library(multcomp)
+library(flexmix)
+
+library(mclust)
+
+library(CAMAN)
+
+library(boot)
+library(mixtools)
+
+
+# cross-sectional analysis with FlexMix R-package
+### gives different variances for each component
+fl<-flexmix(MeanActivity~1,data=fmm,k=2)
+parameters(fl,component=1)
+parameters(fl,component=2)
+summary(fl) ### AIC=542.3639; BIC=549.8465; LL=-266.1820 (df=5)
+### gives 2 components with 2 variances, 2-component model is slightly unstable in terms of AIC, BIC, weight_i(or pi_i), mu_i, sigma_i
+
+x<-seq(from=0,to=4500)
+d1<-dnorm(x,mean=504.3825,sd=270.7498) ### n=22
+d2<-dnorm(x,mean=2801.151,sd=1074.418) ### n=11
+f<-(0.667*d1)+(0.333*d2)
+
+# checking fit variances (FlexMix)
+var(fmm$MeanActivity)
+### 1725666
+
+mu1sq<-(504.3825)^2
+mu2sq<-(2801.151)^2
+s1<-(0.667*mu1sq)+(0.333*mu2sq)
+mu3<-504.3825
+mu4<-2801.151
+s2<-(0.667*mu3)+(0.333*mu4)
+s3<-(0.667*((270.7498)^2))+(0.333*((1074.418)^2))
+sumofvar<-(s1-((s2)^2)+s3)
+sumofvar
+### 1604969 < 1725666
+
+
+# sensitivity analysis with Mclust R-package
+mc<-Mclust(fmm$MeanActivity)
+mc$parameters
+### gives very similar results like that obtained with the FlexMix library
+
+
+# sensitivity analysis with CAMAN R-package
+### gives same variance for each compoent
+caman<-mixalg(obs=fmm$MeanActivity,family="gaussian",startk=10,numiter=50000,limit=0.01)
+### VEM; startk=10 are 10 starting components, which gave 2 components finally
+caman<-mixalg.EM(obs=fmm$MeanActivity,family="gaussian",p=c(0.5,0.5),t=c(500,3000),numiter=50000,limit=0.01)
+### EM; t=c(500,3000) are the 2 starting values forcing a 2-component model
+### both give a single variance parameter with 2 components; BIC=554.0429; LL=-271.7767
+
+c1<-dnorm(x,mean=726.2942,sd=550.89) ### n=26
+c2<-dnorm(x,mean=3572.3454,sd=550.89) ### n=7
+g<-(0.7843898*c1)+(0.2156102*c2)
+
+# checking fit variances (CAMAN)
+var(fmm$MeanActivity)
+### 1725666
+
+mu1sq<-(726.2942)^2
+mu2sq<-(3572.3454)^2
+s1<-(0.7843898*mu1sq)+(0.2156102*mu2sq)
+mu3<-726.2942
+mu4<-3572.3454
+s2<-(0.7843898*mu3)+(0.2156102*mu4)
+s3<-(0.7843898*((550.89)^2))+(0.2156102*((550.89)^2))
+sumofvar<-(s1-((s2)^2)+s3)
+sumofvar
+### 1673373 < 1725666 (gives better results, compared to fit statistics with that of FlexMix)
+
+
+# sensitivity analysis with mixtools R-package
+### 1st model (not used in the graph)
+### gives same variance for each component
+mixtools1<-normalmixEM(fmm$MeanActivity,lambda=0.5,mu=c(500,1500),sigma=1000)
+### EM; lambda are the starting weights (equal), mu are the starting values of means, sigma are the starting values of standard deviations (equal)
+### gives very similar results like that obtained with the CAMAN library
+summary(mixtools1) # LL=-271.7767
+plot(mixtools1,density=TRUE,cex.axis=1.4,cex.lab=1.4,cex.main=1.8,main2="2-component Gaussian",xlab2="Mean Activity (min.)")
+
+### gives different variances for each component, but they are not very different from each other
+### 2nd model (used in the graph)
+mixtools2<-spEMsymloc(fmm$MeanActivity,mu=c(500,1500))
+### gives similar results like that obtained with the CAMAN library
+summary(mixtools2) # ?? no fit statistics
+plot(mixtools2,lty=2,newplot=FALSE,addlegend=FALSE)
+
+m1<-dnorm(x,mean=740,sd=595) ### n=26, from mixtools 2nd model
+m2<-dnorm(x,mean=3520,sd=644) ### n=7, from mixtools 2nd model
+h<-(0.7838753*m1)+(0.2161247*m2)
+
+
+# sensitivity analysis with WinBUGS
+### 1st model
+### assuming a 2-component mixture with equal variances for each component
+b1<-dnorm(x,mean=738.7,sd=610.4) ### n=26 ? from the boxplot
+b2<-dnorm(x,mean=3335.0,sd=610.4) ### n=7 ? from the boxplot
+i<-(0.7521*b1)+(0.2479*b2)
+### gives (very) similar results like that obtained with the CAMAN, mixtools (2nd model) libraries
+
+### 2nd model
+### assuming a 2-component mixture with unequal variances for each component
+B1<-dnorm(x,mean=493.6,sd=269.3) ### n=22 ?? from the boxplot
+B2<-dnorm(x,mean=2345.0,sd=1294.0) ### n=11 ?? from the boxplot
+I<-(0.5775*B1)+(0.4225*B2)
+### gives similar results like that obtained with the FlexMix library
+
+
+# plotting histogram of all models
+hist(fmm$MeanActivity,xlab="Mean nocturnal activity (seconds)",probability=T,border="gray",main="2-component Gaussian",ylim=c(0,10e-04),xlim=c(0,4500))
+lines(x,f,lty=2,lwd=2,col="black")
+lines(x,g,lty=3,lwd=2,col="red")
+lines(x,h,lty=4,lwd=2,col="blue")
+lines(x,i,lty=5,lwd=2,col="green")
+lines(x,I,lty=6,lwd=2,col="magenta")
+legend("topright",c("FlexMix / Mclust (uneq. variances)","CAMAN / mixtools (eq. variances)","mixtools (uneq. variances)","WinBUGS (eq. variances)","WinBUGS (uneq. variances)"),lty=c(2,3,4,5,6),col=c("black","red","blue","green","magenta"),text.col=c("black","red","blue","green","magenta"),lwd=c(2,2,2,2,2))
+
+
+
+
+
+# longitudinal analysis
+# reshaping to wide to long form
+fmm$subject<-factor(rownames(fmm))
+fmm.l<-reshape(fmm,idvar="subject",v.names="activity",timevar="time",varying=list(c("N1","N2","N3","N4","N5","N6","N7","N8")),direction="long")
+
+fl.l<-flexmix(activity~1|subject,data=fmm.l,k=4)
+parameters(fl.l,component=1)
+parameters(fl.l,component=2)
+parameters(fl.l,component=3)
+parameters(fl.l,component=4)
+summary(fl.l) ### AIC=4259.847; BIC=4299.182; LL=-2118.923 (df=11)
+
+X<-seq(from=0,to=8000)
+D1<-dnorm(X,mean=244.2538,sd=158.7587) ### n=7
+D2<-dnorm(X,mean=485.9541,sd=339.7178) ### n=8
+D3<-dnorm(X,mean=1192.723,sd=1250.466) ### n=11
+D4<-dnorm(X,mean=3497.657,sd=1738.368) ### n=7
+F<-(0.217*D1)+(0.239*D2)+(0.318*D3)+(0.227*D4)
+
+hist(fmm.l$activity,xlab="Nocturnal activity (seconds)",probability=T,border="gray",main="4-component Gaussian",ylim=c(0,10e-04),xlim=c(0,8000))
+lines(X,F,lty=2,lwd=2)
+lines(density(fmm.l$activity),lty=3,lwd=2,col="blue")
+legend("topright",c("FlexMix","Density"),lty=c(2,3),col=c("black","blue"),text.col=c("black","blue"),lwd=c(2,2))
+### gives 2 components with 2 variances, 4-component model is stable
+
+
+
+
