@@ -1,0 +1,450 @@
+# load packages:
+library(lattice)
+library(coda)
+library(sp)
+library(Matrix)
+library(MASS)
+library(nlme)
+library(foreign)
+library(maptools)
+library(boot)
+library(deldir)
+library(spdep)
+library(geoR)
+library(spam)
+library(class)
+library(e1071)
+library(classInt)
+library(tcltk)
+library(aplpack)
+library(proj4)
+library(akima)
+library(rgl)
+library(maps)
+library(scatterplot3d)
+library(RColorBrewer)
+library(ape)
+library(mapproj)
+library(mapdata)
+library(shapefiles)
+library(mgcv)
+library(spatstat)
+library(DCluster) # main package for this programme
+library(SpatialEpi) # additional package for this programme
+
+# set working directory:
+setwd("C:/Documents and Settings/SARAH/Bureau/Soutrik/Outputs/Projects/PAISARC+/Exploratory/AD/Beispielen")
+getwd()
+
+# read data, change header names for the package DCluster:
+data <- read.table("Data voor Moran I.txt", header = TRUE, sep = "")
+names(data) <- c("NIS", "x", "y", "NAME", "Observed", "Expected")
+data[1:5, ]
+
+# read map data:
+ant.dbf <- read.dbf("antwerp.dbf")
+ant.shx <- read.shx("antwerp.shx")
+
+Antwerpen <- readShapePoly("antwerp.shp")
+plot(Antwerpen)
+text(coordinates(Antwerpen), label = data$NAME, cex = .8)
+
+
+
+
+
+### ANALYSIS
+### http://cran.r-project.org/web/packages/DCluster/DCluster.pdf
+### http://cran.r-project.org/web/packages/SpatialEpi/SpatialEpi.pdf
+
+
+#################################
+###### DCluster package #########
+#################################
+#### Bootstrapping
+# Since sampling distributions of statistics used in these tests can be difficult to derive,
+# we propose the use of bootstrap sampling to estimate them.  If we think overdispersion
+# may be related to our data, then perhaps it is better to use Negative Binomial sampling.
+# The idea is to choose a suitable model or distribution for the data.
+# Notice that for Openshaw's GAM & Besag and Newell's method NO bootstrap is performed,
+# since the exact critical value is calculated using the negative binomial distribution.
+
+#### Scanning
+# For the scan statistics, there is a main function - opgam().
+
+#### Global clustering
+# General clustering statistics (Whittermore's and Tango's) do not show any evidence
+# of general clustering, because observed values of statistics fall in highly probable
+# regions of sampling distributions.  This fact can be explained by considering that
+# really significant regions, according to the negative binomial distribution, are locally
+# found and that there is no global tendency to cluster among them.  Since these methods
+# are designed to detect global trends, if clusters are small or weak they will not be not
+# detected by these methods.
+
+
+# I. Pearson's chi-square statistic
+# This statistic can be used to detect whether observed data depart expected number
+# of cases significantly.  The test stands for RRs among areas to be =
+# an (unknown) constant lambda, while the alternative hypotheses is that not all RRs are equal.
+# (1)
+achisq.stat(data, lambda = 1)
+
+# (2)
+# permutation model - non-parametric boostrap
+chq.perboot <- boot(data, statistic = achisq.boot, R = 100)
+plot(chq.perboot)
+
+# (3)
+# multinomial model - parametric bootstrap
+chq.mboot <- boot(data, statistic = achisq.pboot, sim = "parametric", ran.gen = multinom.sim, R = 100)
+plot(chq.mboot)
+achisq.test(Observed ~ offset(log(Expected)), data, model = "multinom", R = 100) # boostrap Pearson's chi-square statistic
+
+# (4)
+# Poisson model - parametric bootstrap
+chq.pboot <- boot(data, statistic = achisq.pboot, sim = "parametric", ran.gen = poisson.sim, R = 100)
+plot(chq.pboot)
+achisq.test(Observed ~ offset(log(Expected)), data, model = "poisson", R = 100) # boostrap Pearson's chi-square statistic
+
+# (5)
+# Poisson-gamma model - parametric bootstrap
+chq.pgboot <- boot(data, statistic = achisq.pboot, sim = "parametric", ran.gen = negbin.sim, R = 100)
+plot(chq.pgboot)
+achisq.test(Observed ~ offset(log(Expected)), data, model = "negbin", R = 100) # boostrap Pearson's chi-square statistic
+
+
+# II. Besag & Newell's statistic for spatial clustering
+# This statistic looks for clusters of size k, i.e. where the number of observed cases is k.
+# At every area where a case has appeared, the number of neighbouring regions needed to reach
+# $k$ cases is calculated.  If this number is too small, i.e. too many observed cases in just
+# a few regions with low expected cases, then it is marked as a cluster.
+# (1)
+besagnewell.stat(data, k = 10)
+
+# (2)
+# permutation model - non-parametric bootstrap
+bn.perboot <- boot(data, statistic = besagnewell.boot, R = 100, k = 10) # should vary cluster size k
+plot(bn.perboot)
+# see also ..., besagnewell.pboot() for parametric bootstrap options
+
+# (3)
+# Parametric boostrap Besag & Newell's statistic
+bnresults <- opgam(data, thegrid = data[, c("x", "y")], alpha = .05, iscluster = bn.iscluster, set.idxorder = TRUE, k = 10, model = "poisson", R = 100, mle = calculate.mle(data))
+# should vary cluster size k
+# calculate.mle(data, model = "poisson")
+# see also ..., models other than Poisson
+plot(data$x, data$y, xlab = "Easting", ylab = "Northing", main = "Besag & Newell's method")
+points(bnresults$x, bnresults$y, col = "red", pch = 19)
+
+
+# III. Empirical Bayes smoothing & plots
+par(mfrow = c(1, 2))
+# (1) Normal
+smth <- empbaysmooth(data$Observed, data$Expected)
+smth$smthrr <- round(smth$smthrr, 2)
+nclr <- 5 # 4
+plotclr <- brewer.pal(nclr, "Blues")
+class <- classIntervals(smth$smthrr, nclr, style = "jenks")
+colcode <- findColours(class, plotclr)
+plot(Antwerpen, col = colcode)
+legend("topleft", legend = names(attr(colcode, "table")), fill = attr(colcode, "palette"), cex = 1, bty = "n")
+title('SIR EB smoothing (DCluster)')
+
+# (2) Log-Normal
+ln.smth <- lognormalEB(data$Observed, data$Expected)
+ln.smth$exp.smthrr <- round(exp(ln.smth$smthrr), 2)
+nclr <- 5 # 4
+plotclr <- brewer.pal(nclr, "Blues")
+class <- classIntervals(ln.smth$exp.smthrr, nclr, style = "jenks")
+colcode <- findColours(class, plotclr)
+plot(Antwerpen, col = colcode)
+legend("topleft", legend = names(attr(colcode, "table")), fill = attr(colcode, "palette"), cex = 1, bty = "n")
+title('SIR Log-Normal EB smoothing (DCluster)')
+
+
+# IV. Geary's c statistic & Geary's c bootstrap statistic
+# not done here
+
+
+# V. Kulldorff's scan statistic for "hotspot" / "coldspot" - cluster detection
+# (1)
+# Transform data to data1, because Observed variable is integer, which should be numeric for Kulldorf's scan
+data1 <- transform(data, Observed = as.numeric(Observed))
+sapply(data1, class) # check
+knresults <- opgam(data1, thegrid = data[, c("x", "y")], alpha = .05, iscluster = kn.iscluster, fractpop = .5, R = 100, model = "poisson", mle = calculate.mle(data))
+# plot ALL centroids and significant ones in red
+plot(data1$x, data1$y, main = "Kulldorff and Nagarwalla's method")
+points(knresults$x, knresults$y, col = "red", pch = 19)
+# plot FIRST cluster(s) with the highest likelihood ratio test in green
+clusters <- get.knclusters(data, knresults)
+idx <- which.max(knresults$statistic)
+points(data$x[clusters[[idx]]], data$y[clusters[[idx]]], col = "green", pch = 19)
+
+# (2)
+dist <- (data1$x - data1$x[2])^2 + (data1$y - data1$y[2])^2
+index <- order(dist)
+# Compute statistic around the SECOND gemeente e.g.
+kullnagar.stat(data1[index, ], fractpop = .5)
+
+# (3)
+# permutation model - non-parametric bootstrap
+kn.perboot <- boot(data1, statistic = kullnagar.boot, R = 100, fractpop = .5)
+plot(kn.perboot)
+
+# (4)
+# multinomial model - parametric bootstrap
+kn.mboot <- boot(data1, statistic = kullnagar.pboot, sim = "parametric", ran.gen = multinom.sim, R = 100, fractpop = .5)
+plot(kn.mboot)
+
+# (5)
+# Poisson model - parametric bootstrap
+kn.pboot <- boot(data1, statistic = kullnagar.pboot, sim = "parametric", ran.gen = poisson.sim, R = 100, fractpop = .5)
+plot(kn.pboot)
+
+# (6)
+# Poisson-gamma model - parametric bootstrap
+kn.pgboot <- boot(data1, statistic = kullnagar.pboot, sim = "parametric", ran.gen = negbin.sim, R = 100, fractpop = .5)
+plot(kn.pgboot)
+
+
+# VI. Moran's I statistic & Moran's I bootstrap statistic
+# not done here
+
+
+# VII. Openshaw's Geographical Analysis Machine (GAM) for cluster detection
+# This is the first scan method proposed.  It is based on creating a grid over the study region
+# and building balls (i.e. circles) of a given radius centred at that points.  For each ball,
+# a local test is performed to decide whether it is a cluster or not.
+# Create data2 from data1
+data2 <- as.data.frame(cbind(Observed = data1$Observed, Expected = data1$Expected, x = data1$x, y = data1$y))
+datagam <- opgam(data2, radius = 0.25, step = 0.01, alpha = .05) # should vary radius and step arguments
+# plot centroids
+plot(data2$x, data$y, xlab = "Easting", ylab = "Northing", main = "Openshaw's GAM")
+# plot points marked as clusters
+points(datagam$x, datagam$y, col = "red", pch = "*")
+
+
+# VIII. Potthoff-Whittinghill's statistic for overdispersion / test for homogeneity of all RRs
+# Alternative hypotheses is that RRs are drawn from a gamma distribution with mean lambda and variance sigma-squared.
+# (1)
+pottwhitt.stat(data)
+
+# (2)
+# permutation model
+pw.boot <- boot(data, statistic = pottwhitt.boot, R = 100)
+plot(pw.boot)
+
+# (3)
+# multinomial model
+pw.mboot <- boot(data, statistic = pottwhitt.pboot, sim = "parametric", ran.gen = multinom.sim, R = 100)
+plot(pw.mboot)
+pottwhitt.test(Observed ~ offset(log(Expected)), data, model = "multinom", R = 100)
+
+# (4)
+# Poisson model
+pw.pboot <- boot(data, statistic = pottwhitt.pboot, sim = "parametric", ran.gen = poisson.sim, R = 100)
+plot(pw.pboot)
+pottwhitt.test(Observed ~ offset(log(Expected)), data, model = "poisson", R = 100)
+
+# (5)
+# Poisson-gamma model
+pw.pgboot <- boot(data, statistic = pottwhitt.pboot, sim = "parametric", ran.gen = negbin.sim, R = 100)
+plot(pw.pgboot)
+pottwhitt.test(Observed ~ offset(log(Expected)), data, model = "negbin", R = 100)
+
+
+# IX. Stone's test
+# Stone's Test is used to assess risk around given locations (i.e. a putative pollution source).
+# The null hypotheses is that RRs are constant across areas, while the alternative is that there is a
+# descending trend in RRs as distance to the focus increases.
+# (1)
+# Compute statistic around the SECOND gemeente
+zone <- which(row.names(data)== "2") # extract the reference region
+stone.stat(data, region = zone, lambda = 1)
+
+# (2)
+# permutation model
+st.perboot <- boot(data, statistic = stone.boot, R = 100, region = 11002) # NIS
+plot(st.perboot)
+
+# (3)
+# multinomial model
+st.mboot <- boot(data, statistic = stone.pboot, sim = "parametric", ran.gen = multinom.sim, R = 100, region = 11002) # NIS
+plot(st.mboot)
+stone.test(Observed ~ offset(log(Expected)), data, model = "multinom", R = 100, region = zone, lambda = 1)
+
+# (4)
+# Poisson model
+st.pboot <- boot(data, statistic = stone.pboot, sim = "parametric", ran.gen = poisson.sim, R = 100, region = 11002) # NIS
+plot(st.pboot)
+stone.test(Observed ~ offset(log(Expected)), data, model = "poisson", R = 100, region = zone, lambda = 1)
+
+# (5)
+# Poisson-gamma model
+st.pgboot <- boot(data, statistic = stone.pboot, sim = "parametric", ran.gen = negbin.sim, R = 100, region = 11002) # NIS
+plot(st.pgboot)
+stone.test(Observed ~ offset(log(Expected)), data, model = "negbin", R = 100, region = zone, lambda = 1)
+
+
+# X. Tango's test for general clustering
+# It was proposed by Tango as a modification to Whittermore's statistic.
+# (1)
+# calculate neighbours based on distance
+coords <- as.matrix(data[, c("x", "y")])
+dlist <- dnearneigh(coords, 0, Inf)
+dlist <- include.self(dlist)
+dlist.d <- nbdists(dlist, coords)
+# calculate weights: they are globally standardised but it doesn't change significance
+col.W.tango <- nb2listw(dlist, glist = lapply(dlist.d, function(x) {exp(-x)}), style = "C")
+
+# (2)
+tango.stat(data, col.W.tango, zero.policy = TRUE)
+
+# (3)
+# permutation model
+tn.boot <- boot(data, statistic = tango.boot, R = 100, listw = col.W.tango, zero.policy = TRUE)
+plot(tn.boot)
+
+# (4)
+# multinomial model
+tn.mboot <- boot(data, statistic = tango.pboot, sim = "parametric", ran.gen = multinom.sim, R = 100, listw = col.W.tango, zero.policy = TRUE)
+plot(tn.mboot)
+tango.test(Observed ~ offset(log(Expected)), data, model = "multinom", R = 100, list = col.W.tango, zero.policy = TRUE)
+
+# (5)
+# Poisson model
+tn.pboot <- boot(data, statistic = tango.pboot, sim = "parametric", ran.gen = poisson.sim, R = 100, listw = col.W.tango, zero.policy = TRUE)
+plot(tn.pboot)
+tango.test(Observed ~ offset(log(Expected)), data, model = "poisson", R = 100, list = col.W.tango, zero.policy = TRUE)
+
+# (6)
+# Poisson-gamma model
+tn.pgboot <- boot(data, statistic = tango.pboot, sim = "parametric", ran.gen = negbin.sim, R = 100, listw = col.W.tango, zero.policy = TRUE)
+plot(tn.pgboot)
+tango.test(Observed ~ offset(log(Expected)), data, model = "negbin", R = 100, list = col.W.tango, zero.policy = TRUE)
+
+
+# XI. Dean's test for overdispersion
+x.glm <- glm(Observed ~ 1 + offset(log(data$Expected)), data = data, family = poisson())
+x.nb <- glm.nb(Observed ~ 1 + offset(log(data$Expected)), data = data)
+print(test.nb.pois(x.nb, x.glm))
+print(DeanB(x.glm, alternative = "two.sided"))
+print(DeanB2(x.glm, alternative = "two.sided"))
+
+
+# XII. Whittermore's statistic for general clustering - ?? bugs in this function !!
+# This statistic has been heavily criticised by Tango because it only cares about the
+# observed number of cases, and not about discrepancies between observed and expected.
+# (1)
+# Achtung !!  Obtain the objects needed from Tango's test previously !!
+# calculate weights: they are globally standardised but it doesn't change significance
+col.W.whitt <- nb2listw(dlist, glist = dlist.d, style = "C")
+
+# (2)
+whittermore.stat(data, col.W.whitt, zero.policy = TRUE)
+
+# (3)
+# permutation model
+wt.boot <- boot(data, statistic = whittermore.boot, R = 100, listw = col.W.whitt, zero.policy = TRUE)
+plot(wt.boot)
+
+# (4)
+# multinomial model
+wt.mboot <- boot(data, statistic = whittermore.pboot, sim = "parametric", ran.gen = multinom.sim, R = 100, listw = col.W.whitt, zero.policy = TRUE)
+plot(wt.mboot)
+whittermore.test(Observed ~ offset(log(Expected)), data, model = "multinom", R = 100, listw = col.W.whitt, zero.policy = TRUE)
+
+# (5)
+# Poisson model
+wt.pboot <- boot(data, statistic = whittermore.pboot, sim = "parametric", ran.gen = poisson.sim, R = 100, listw = col.W.whitt, zero.policy = TRUE)
+plot(wt.pboot)
+whittermore.test(Observed ~ offset(log(Expected)), data, model = "poisson", R = 100, listw = col.W.whitt, zero.policy = TRUE)
+
+# (6)
+# Poisson-gamma model
+wt.pgboot <- boot(data, statistic = whittermore.pboot, sim = "parametric", ran.gen = negbin.sim, R = 100, listw = col.W.whitt, zero.policy = TRUE)
+plot(wt.pgboot)
+whittermore.test(Observed ~ offset(log(Expected)), data, model = "negbin", R = 100, listw = col.W.whitt, zero.policy = TRUE)
+
+
+########################################
+###### SpatialEpi package ##############
+########################################
+# XIII. Kulldorff's scan
+pop.upper.bound <- 0.5
+n.simulations <- 99
+alpha.level <- 0.05
+plot <- TRUE
+geo <- data[, 2:3]
+# geo <- latlong2grid(geo) # not needed
+cases <- data$Observed
+population <- [TO BE ADDED]
+expected.cases <- as.integer(round(data$Expected))
+
+y <- as(Antwerpen, "SpatialPolygons") # trick1
+
+# (1) Binomial likelihood
+binomial <- kulldorff(geo, cases, population, NULL, pop.upper.bound, n.simulations, alpha.level, plot)
+cluster <- binomial$most.likely.cluster$location.IDs.included
+plot(y, axes = TRUE)
+plot(y[cluster], add = TRUE, col = "red")
+title("Most Likely Cluster")
+
+# (2) Poisson likelihood
+poisson <- kulldorff(geo, cases, population, expected.cases, pop.upper.bound, n.simulations, alpha.level, plot)
+cluster <- poisson$most.likely.cluster$location.IDs.included
+plot(y, axes = TRUE)
+plot(y[cluster], add = TRUE, col = "red")
+title("Most Likely Cluster Controlling for Strata")
+
+
+# XIV. Besag & Newell's statistic for spatial clustering
+# bnresults.binomial <- besag.newell(geo, population, cases, expected.cases = NULL, 10, alpha.level) # k = 10, should vary cluster size k
+# bnresults.poisson <- besag.newell(geo, population, cases, expected.cases, 10, alpha.level) # k = 10, should vary cluster size k
+
+# XV. Empirical Bayes smoothing
+eBayes1 <- eBayes(data$Observed, data$Expected, Xmat = NULL)
+nclr <- 5
+plotclr <- brewer.pal(nclr, "Reds")
+cuts <- c(0.0, 0.5, 0.8, 1.2, 2.5, 4.1)
+class <- classIntervals(eBayes1$RR, nclr, fixedBreaks = cuts, style = "fixed") # "eBayes1$SMR" for crude SIR rates
+colcode <- findColours(class, plotclr)
+plot(sma.zn, col = colcode)
+legend("bottomleft", legend = names(attr(colcode, "table")), fill = attr(colcode, "palette"), cex = 1, bty = "n")
+title('SIR EB smoothing (SpatialEpi)')
+
+
+###################################################
+################ spdep package ####################
+###################################################
+# XVI. Probability & Choynowski maps
+par(mfrow = c(1, 2))
+# (1)
+probmap <- probmap(data$Observed, data$Expected)
+Expected <- data$Expected + 0.32 # to make sum of expected > observed in Choynowski's map
+choynowski <- choynowski(data$Observed, Expected, row.names = NULL, tol = .Machine$double.eps^0.5)
+table(abs(choynowski$pmap - probmap$pmap) < 0.00001, choynowski$type)
+lt005 <- (choynowski$pmap < 0.025) & (choynowski$type)
+ge005 <- (choynowski$pmap < 0.025) & (!choynowski$type)
+
+# (2) Probability map plot
+probmap$pmap <- round(probmap$pmap, 2)
+nclr <- 5 # 4
+plotclr <- brewer.pal(nclr, "Blues")
+class <- classIntervals(probmap$pmap, nclr, style = "jenks")
+colcode <- findColours(class, plotclr)
+plot(Antwerpen, col = colcode)
+legend("topleft", legend = names(attr(colcode, "table")), fill = attr(colcode, "palette"), cex = 1, bty = "n")
+title('SIR probability map')
+
+# (3) Choynowski's map plot
+cols <- rep("white", length(lt005))
+cols[ge005] <- grey(2/7)
+cols[lt005] <- grey(5/7)
+plot(Antwerpen, col = cols)
+legend("topleft", legend = c("High risk of Cervix-Ca", "Low risk of Cervix-Ca"), fill = grey(c(2, 5)/7), cex = 1, bty = "n")
+title('SIR Choynowski map')
+
+
+
+
