@@ -1,0 +1,193 @@
+##################
+# NOTE: glm()+ns() = gam()+ns(), BUT glm()+s() ~ gam()+s() {cf. Peng et al. article}
+# s() => B-penalised spline, ns() => natural (cubic) spline
+##################
+
+#######################
+# libraries load kora #
+#######################
+# general packages
+library(stats)
+library(lattice)
+
+# specific packages
+library(gam) # may not use with library(mgcv) for conflicts, it uses S+ functions (by Trevor Hastie)
+library(dlnm) # distributed lag non-linear models (by Antonio Gasparrini (LSHTM) & Ben Armstrong)
+library(class); library(mda) # bruto()-er jonnye
+library(gdata) # rename.vars()-er jonnye
+
+##################
+# data load kora #
+##################
+data <- read.csv("C:/Users/u707-10299/Documents/Soutrik/Inserm U.707/Studies/BAPHE/Outputs/Exploratory/AD/TSDS_Beirut.csv", header = TRUE)
+data$time <- seq(from = 1, to = 366, by = 1)
+data$date2 <- as.Date(data$date, "%d/%m/%Y") # %d/%m/%Y is the date READING format from date variable, and not the OUTPUT format of date2 variable, which will be "yyyy-mm-dd" by default
+data <- data[, -1]
+data <- rename.vars(data, from = "date2", to = "date", info = TRUE)
+head(data)
+
+
+#####################################
+# DISTRIBUTED LAG NON-LINEAR MODELS #
+#####################################
+############  PM2.5 ############
+cb1.pm25 <- crossbasis(data$PM25, lag = 13, argvar = list(type = "lin", cen = 0), arglag = list(type = "poly", degree = 4))
+summary(cb1.pm25)
+
+### GLM() + PENALISED SPLINE ###
+##### CVA #####
+mod1.pm25.cva <- glm(cva ~ cb1.pm25 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.cva <- crosspred(cb1.pm25, mod1.pm25.cva, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### IHD #####
+mod1.pm25.ihd <- glm(ihd ~ cb1.pm25 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.ihd <- crosspred(cb1.pm25, mod1.pm25.ihd, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### RESPIRATORY #####
+mod1.pm25.resp <- glm(resp ~ cb1.pm25 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.resp <- crosspred(cb1.pm25, mod1.pm25.resp, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### HIVES #####
+mod1.pm25.hives <- glm(hives ~ cb1.pm25 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.hives <- crosspred(cb1.pm25, mod1.pm25.hives, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### EAR #####
+mod1.pm25.ear <- glm(ear ~ cb1.pm25 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.ear <- crosspred(cb1.pm25, mod1.pm25.ear, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### PM2.5 - PLOTS #####
+# NOTE: THE OPTION "VAR = XXX" GIVES THE SPECIFIC EXPOSURE VALUE AT WHICH THE CROSS-PREDICTIONS ARE MADE
+par(mfrow = c(2, 5), oma = c(0, 0, 3, 0))
+plot(pred1.pm25.cva, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "CVA")
+plot(pred1.pm25.ihd, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "IHD")
+plot(pred1.pm25.resp, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Respiratory")
+plot(pred1.pm25.hives, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Hives")
+plot(pred1.pm25.ear, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Ear")
+
+plot(pred1.pm25.cva, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "CVA")
+plot(pred1.pm25.ihd, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "IHD")
+plot(pred1.pm25.resp, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "Respiratory")
+plot(pred1.pm25.hives, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "Hives")
+plot(pred1.pm25.ear, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "Ear")
+
+title("Distributed lag model (penalised spline): RR & cumulative RR for a 10-unit rise in PM2.5", outer = TRUE)
+
+### GAM() + PENALISED SPLINE ###
+##### CVA #####
+mod1.pm25.cva2 <- gam(cva ~ cb1.pm25 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.cva2 <- crosspred(cb1.pm25, mod1.pm25.cva2, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### IHD #####
+mod1.pm25.ihd2 <- gam(ihd ~ cb1.pm25 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.ihd2 <- crosspred(cb1.pm25, mod1.pm25.ihd2, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### RESPIRATORY #####
+mod1.pm25.resp2 <- gam(resp ~ cb1.pm25 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.resp2 <- crosspred(cb1.pm25, mod1.pm25.resp2, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### HIVES #####
+mod1.pm25.hives2 <- gam(hives ~ cb1.pm25 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.hives2 <- crosspred(cb1.pm25, mod1.pm25.hives2, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### EAR #####
+mod1.pm25.ear2 <- gam(ear ~ cb1.pm25 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.ear2 <- crosspred(cb1.pm25, mod1.pm25.ear2, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### PM2.5 - PLOTS #####
+# NOTE: THE OPTION "VAR = XXX" GIVES THE SPECIFIC EXPOSURE VALUE AT WHICH THE CROSS-PREDICTIONS ARE MADE
+par(mfrow = c(2, 5), oma = c(0, 0, 3, 0))
+plot(pred1.pm25.cva2, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "CVA")
+plot(pred1.pm25.ihd2, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "IHD")
+plot(pred1.pm25.resp2, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Respiratory")
+plot(pred1.pm25.hives2, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Hives")
+plot(pred1.pm25.ear2, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Ear")
+
+plot(pred1.pm25.cva2, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "CVA")
+plot(pred1.pm25.ihd2, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "IHD")
+plot(pred1.pm25.resp2, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "Respiratory")
+plot(pred1.pm25.hives2, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "Hives")
+plot(pred1.pm25.ear2, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "Ear")
+
+title("Distributed lag model (gam() + penalised spline): RR & cumulative RR for a 10-unit rise in PM2.5", outer = TRUE)
+
+
+############  PM10 ############
+cb1.pm10 <- crossbasis(data$PM10, lag = 13, argvar = list(type = "lin", cen = 10), arglag = list(type = "poly", degree = 4))
+summary(cb1.pm10)
+
+### GLM() + PENALISED SPLINE ###
+##### CVA #####
+mod1.pm10.cva <- glm(cva ~ cb1.pm10 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.cva <- crosspred(cb1.pm10, mod1.pm10.cva, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### IHD #####
+mod1.pm10.ihd <- glm(ihd ~ cb1.pm10 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.ihd <- crosspred(cb1.pm10, mod1.pm10.ihd, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### RESPIRATORY #####
+mod1.pm10.resp <- glm(resp ~ cb1.pm10 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.resp <- crosspred(cb1.pm10, mod1.pm10.resp, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### HIVES #####
+mod1.pm10.hives <- glm(hives ~ cb1.pm10 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.hives <- crosspred(cb1.pm10, mod1.pm10.hives, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### EAR #####
+mod1.pm10.ear <- glm(ear ~ cb1.pm10 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.ear <- crosspred(cb1.pm10, mod1.pm10.ear, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### PM10 - PLOTS #####
+# NOTE: THE OPTION "VAR = XXX" GIVES THE SPECIFIC EXPOSURE VALUE AT WHICH THE CROSS-PREDICTIONS ARE MADE
+par(mfrow = c(2, 5), oma = c(0, 0, 3, 0))
+plot(pred1.pm10.cva, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "CVA")
+plot(pred1.pm10.ihd, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "IHD")
+plot(pred1.pm10.resp, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Respiratory")
+plot(pred1.pm10.hives, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Hives")
+plot(pred1.pm10.ear, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Ear")
+
+plot(pred1.pm10.cva, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "CVA")
+plot(pred1.pm10.ihd, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "IHD")
+plot(pred1.pm10.resp, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "Respiratory")
+plot(pred1.pm10.hives, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "Hives")
+plot(pred1.pm10.ear, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "Ear")
+
+title("Distributed lag model (penalised spline): RR & cumulative RR for a 10-unit rise in PM10", outer = TRUE)
+
+### GAM() + PENALISED SPLINE ###
+##### CVA #####
+mod1.pm10.cva2 <- glm(cva ~ cb1.pm10 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.cva2 <- crosspred(cb1.pm10, mod1.pm10.cva2, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### IHD #####
+mod1.pm10.ihd2 <- glm(ihd ~ cb1.pm10 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.ihd2 <- crosspred(cb1.pm10, mod1.pm10.ihd2, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### RESPIRATORY #####
+mod1.pm10.resp2 <- glm(resp ~ cb1.pm10 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.resp2 <- crosspred(cb1.pm10, mod1.pm10.resp2, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### HIVES #####
+mod1.pm10.hives2 <- glm(hives ~ cb1.pm10 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.hives2 <- crosspred(cb1.pm10, mod1.pm10.hives2, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### EAR #####
+mod1.pm10.ear2 <- glm(ear ~ cb1.pm10 + s(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.ear2 <- crosspred(cb1.pm10, mod1.pm10.ear2, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### PM10 - PLOTS #####
+# NOTE: THE OPTION "VAR = XXX" GIVES THE SPECIFIC EXPOSURE VALUE AT WHICH THE CROSS-PREDICTIONS ARE MADE
+par(mfrow = c(2, 5), oma = c(0, 0, 3, 0))
+plot(pred1.pm10.cva2, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "CVA")
+plot(pred1.pm10.ihd2, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "IHD")
+plot(pred1.pm10.resp2, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Respiratory")
+plot(pred1.pm10.hives2, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Hives")
+plot(pred1.pm10.ear2, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Ear")
+
+plot(pred1.pm10.cva2, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "CVA")
+plot(pred1.pm10.ihd2, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "IHD")
+plot(pred1.pm10.resp2, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "Respiratory")
+plot(pred1.pm10.hives2, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "Hives")
+plot(pred1.pm10.ear2, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "Ear")
+
+title("Distributed lag model (gam() + penalised spline): RR & cumulative RR for a 10-unit rise in PM10", outer = TRUE)
+

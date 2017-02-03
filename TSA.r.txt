@@ -1,0 +1,449 @@
+#######################
+# libraries load kora #
+#######################
+# general packages
+library(stats)
+library(lattice)
+
+# specific packages
+library(mgcv) # by Simon Wood (the most standard package)
+library(splines)
+# library(gam) # may not use with library(mgcv) for conflicts, it uses S+ functions (by Trevor Hastie)
+library(dlnm) # distributed lag non-linear models (by Antonio Gasparrini (LSHTM) & Ben Armstrong)
+library(class); library(mda) # bruto()-er jonnye
+library(gdata) # rename.vars()-er jonnye
+library(xts); library(zoo); library(TTR) # SMA() function
+library(forecast) # auto.arima(), forecast.Arima functions
+
+##################
+# data load kora #
+##################
+data <- read.csv("C:/Users/u707-10299/Documents/Soutrik/Inserm U.707/Studies/BAPHE/Outputs/Exploratory/AD/TSDS_Beirut.csv", header = TRUE)
+data$time <- seq(from = 1, to = 366, by = 1)
+data$date2 <- as.Date(data$date, "%d/%m/%Y") # %d/%m/%Y is the date READING format from date variable, and not the OUTPUT format of date2 variable, which will be "yyyy-mm-dd" by default
+data <- data[, -1]
+data <- rename.vars(data, from = "date2", to = "date", info = TRUE)
+head(data)
+
+#######################
+# prothom exploration #
+#######################
+# outcomes-er summary
+summary(data[, c(2:6)])
+
+# dushon-er summary
+summary(data[, c(7, 8)])
+
+# abhaoyar-er summary
+summary(data[, c(10, 11)])
+
+# onnaynno summary
+table(data$dow)
+
+# NOTE: ONLY EAR ~ POISSON DISTRIBUTION; IN OTHER OUTCOMES VARIANCE >> MEAN
+
+############
+# TS plots #
+############
+par(mfrow = c(2, 3))
+spectrum(data$cva)
+spectrum(data$ihd)
+spectrum(data$resp)
+spectrum(data$hives)
+spectrum(data$ear)
+
+par(mfrow = c(2, 3))
+# plot.ts()
+ts.plot(data$cva)
+ts.plot(data$ihd)
+ts.plot(data$resp)
+ts.plot(data$hives)
+ts.plot(data$ear)
+
+# Bartlett's cumulative periodogram test
+par(mfrow = c(2, 3))
+cpgram(data$cva)
+cpgram(data$ihd)
+cpgram(data$resp)
+cpgram(data$hives)
+cpgram(data$ear)
+
+# time-series object toiri kora
+ts.cva <- ts(data$cva)
+ts.ihd <- ts(data$ihd)
+ts.resp <- ts(data$resp)
+ts.hives <- ts(data$hives)
+ts.ear <- ts(data$ear)
+
+# simple exponential smoothing
+par(mfrow = c(2, 3))
+# HoltWinters(ts.cva, beta = FALSE, gamma = FALSE), etc.
+plot(HoltWinters(ts.cva, beta = FALSE, gamma = FALSE)) # beta = 0
+plot(HoltWinters(ts.ihd, gamma = FALSE))
+plot(HoltWinters(ts.resp, gamma = FALSE))
+plot(HoltWinters(ts.hives, beta = FALSE, gamma = FALSE)) # beta = 0
+plot(HoltWinters(ts.ear, gamma = FALSE))
+
+# simple exponential forecasting
+par(mfrow = c(2, 3))
+plot.forecast(forecast.HoltWinters(HoltWinters(ts.cva, beta = FALSE, gamma = FALSE), h = 10))
+plot.forecast(forecast.HoltWinters(HoltWinters(ts.ihd, gamma = FALSE), h = 10))
+plot.forecast(forecast.HoltWinters(HoltWinters(ts.resp, gamma = FALSE), h = 10))
+plot.forecast(forecast.HoltWinters(HoltWinters(ts.hives, beta = FALSE, gamma = FALSE), h = 10))
+plot.forecast(forecast.HoltWinters(HoltWinters(ts.ear, gamma = FALSE), h = 10))
+
+# auto ARIMA
+auto.arima(ts.cva, ic = "bic")
+auto.arima(ts.ihd, ic = "bic")
+auto.arima(ts.resp, ic = "bic")
+auto.arima(ts.hives, ic = "bic")
+auto.arima(ts.ear, ic = "bic")
+
+# forecast ARIMA
+arima.cva <- arima(ts.cva, order = c(0, 1, 2)); arima.cva
+arima.ihd <- arima(ts.ihd, order = c(0, 0, 0)); arima.ihd
+arima.resp <- arima(ts.resp, order = c(0, 1, 1)); arima.resp
+arima.hives <- arima(ts.hives, order = c(0, 1, 1)); arima.hives
+arima.ear <- arima(ts.ear, order = c(0, 1, 1)); arima.ear
+
+par(mfrow = c(2, 3))
+plot.forecast(forecast.Arima(arima.cva, h = 10))
+plot.forecast(forecast.Arima(arima.ihd, h = 10))
+plot.forecast(forecast.Arima(arima.resp, h = 10))
+plot.forecast(forecast.Arima(arima.hives, h = 10))
+plot.forecast(forecast.Arima(arima.ear, h = 10))
+
+#####################
+# exploratory plots #
+#####################
+# plots vs. time
+par(mfrow = c(2, 1))
+with(data, {plot(time, PM25, ylab = expression(PM[2.5]), xlab = "Days", cex = 1, pch = 16)})
+with(data, {plot(time, PM10, ylab = expression(PM[10]), xlab = "Days", cex = 1, pch = 16)})
+
+par(mfrow = c(3, 2))
+with(data, {plot(time, cva, ylab = "CVA", xlab = "Days", cex = 1, pch = 16)})
+with(data, {plot(time, ihd, ylab = "IHD", xlab = "Days", cex = 1, pch = 16)})
+with(data, {plot(time, resp, ylab = "Respiratory", xlab = "Days", cex = 1, pch = 16)})
+with(data, {plot(time, hives, ylab = "Hives", xlab = "Days", cex = 1, pch = 16)})
+with(data, {plot(time, ear, ylab = "Ear", xlab = "Days", cex = 1, pch = 16)})
+
+par(mfrow = c(2, 1))
+with(data, {plot(time, temp, ylab = "Temperature (°C)", xlab = "Days", cex = 1, pch = 16)})
+with(data, {plot(time, rh, ylab = "Relative humidity (%)", xlab = "Days", cex = 1, pch = 16)})
+
+##################################
+# exploratory plot-smoothed fits #
+##################################
+# plots vs. time
+xyplot(PM25 ~ time, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(PM10 ~ time, data = data, type = c('p', 'smooth'), col = "black")
+
+xyplot(cva ~ time, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(ihd ~ time, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(resp ~ time, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(hives ~ time, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(ear ~ time, data = data, type = c('p', 'smooth'), col = "black")
+
+xyplot(temp ~ time, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(rh ~ time, data = data, type = c('p', 'smooth'), col = "black")
+
+# mehr conditional plots [outcome ~ exposure | week day]
+xyplot(cva ~ PM25 | dow, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(ihd ~ PM25 | dow, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(resp ~ PM25 | dow, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(hives ~ PM25 | dow, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(ear ~ PM25 | dow, data = data, type = c('p', 'smooth'), col = "black")
+
+xyplot(cva ~ PM10 | dow, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(ihd ~ PM10 | dow, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(resp ~ PM10 | dow, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(hives ~ PM10 | dow, data = data, type = c('p', 'smooth'), col = "black")
+xyplot(ear ~ PM10 | dow, data = data, type = c('p', 'smooth'), col = "black")
+
+################################
+# exploratory autocorrelations #
+################################
+par(mfrow = c(2, 1))
+acf(data$PM25, lag.max = 10, ci.col = "black")
+acf(data$PM10, lag.max = 10, ci.col = "black")
+
+par(mfrow = c(3, 2))
+acf(data$cva, lag.max = 10, ci.col = "black")
+acf(data$ihd, lag.max = 10, ci.col = "black")
+acf(data$resp, lag.max = 10, ci.col = "black")
+acf(data$hives, lag.max = 10, ci.col = "black")
+acf(data$ear, lag.max = 10, ci.col = "black")
+
+par(mfrow = c(2, 1))
+acf(data$temp, lag.max = 10, ci.col = "black")
+acf(data$rh, lag.max = 10, ci.col = "black")
+
+########################################
+# exploratory partial autocorrelations #
+########################################
+par(mfrow = c(2, 1))
+pacf(data$PM25, lag.max = 10, ci.col = "black")
+pacf(data$PM10, lag.max = 10, ci.col = "black")
+
+par(mfrow = c(3, 2))
+pacf(data$cva, lag.max = 10, ci.col = "black")
+pacf(data$ihd, lag.max = 10, ci.col = "black")
+pacf(data$resp, lag.max = 10, ci.col = "black")
+pacf(data$hives, lag.max = 10, ci.col = "black")
+pacf(data$ear, lag.max = 10, ci.col = "black")
+
+par(mfrow = c(2, 1))
+pacf(data$temp, lag.max = 10, ci.col = "black")
+pacf(data$rh, lag.max = 10, ci.col = "black")
+
+
+#####################################
+# DISTRIBUTED LAG NON-LINEAR MODELS #
+#####################################
+############  PM2.5 ############
+cb1.pm25 <- crossbasis(data$PM25, lag = 13, argvar = list(type = "lin", cen = 0), arglag = list(type = "poly", degree = 4))
+summary(cb1.pm25)
+
+##### CVA #####
+mod1.pm25.cva <- glm(cva ~ cb1.pm25 + ns(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.cva <- crosspred(cb1.pm25, mod1.pm25.cva, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### IHD #####
+mod1.pm25.ihd <- glm(ihd ~ cb1.pm25 + ns(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.ihd <- crosspred(cb1.pm25, mod1.pm25.ihd, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### RESPIRATORY #####
+mod1.pm25.resp <- glm(resp ~ cb1.pm25 + ns(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.resp <- crosspred(cb1.pm25, mod1.pm25.resp, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### HIVES #####
+mod1.pm25.hives <- glm(hives ~ cb1.pm25 + ns(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.hives <- crosspred(cb1.pm25, mod1.pm25.hives, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### EAR #####
+mod1.pm25.ear <- glm(ear ~ cb1.pm25 + ns(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.ear <- crosspred(cb1.pm25, mod1.pm25.ear, at = 4:209, bylag = 0.2, cumul = TRUE)
+
+##### PM2.5 - PLOTS #####
+# NOTE: THE OPTION "VAR = XXX" GIVES THE SPECIFIC EXPOSURE VALUE AT WHICH THE CROSS-PREDICTIONS ARE MADE
+# (1)
+par(mfrow = c(2, 5), oma = c(0, 0, 3, 0))
+plot(pred1.pm25.cva, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "CVA")
+plot(pred1.pm25.ihd, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "IHD")
+plot(pred1.pm25.resp, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Respiratory")
+plot(pred1.pm25.hives, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Hives")
+plot(pred1.pm25.ear, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Ear")
+
+plot(pred1.pm25.cva, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "CVA")
+plot(pred1.pm25.ihd, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "IHD")
+plot(pred1.pm25.resp, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "Respiratory")
+plot(pred1.pm25.hives, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "Hives")
+plot(pred1.pm25.ear, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR", main = "Ear")
+
+title("Distributed lag model: RR & cumulative RR for a 10-unit rise in PM2.5", outer = TRUE)
+
+# (2)
+par(mfrow = c(2, 3), oma = c(0, 0, 3, 0))
+plot(pred1.pm25.cva, xlab = "PM2.5", zlab = "RR", theta = 30, phi = 40, lphi = 70, main = "CVA")
+plot(pred1.pm25.ihd, xlab = "PM2.5", zlab = "RR", theta = 30, phi = 40, lphi = 70, main = "IHD")
+plot(pred1.pm25.resp, xlab = "PM2.5", zlab = "RR", theta = 30, phi = 40, lphi = 70, main = "Respiratory")
+plot(pred1.pm25.hives, xlab = "PM2.5", zlab = "RR", theta = 30, phi = 40, lphi = 70, main = "Hives")
+plot(pred1.pm25.ear, xlab = "PM2.5", zlab = "RR", theta = 30, phi = 40, lphi = 70, main = "Ear")
+
+title("Distributed lag model (3-D plot): RR for a 10-unit rise in PM2.5", outer = TRUE)
+
+# (3)
+plot(pred1.pm25.cva, "contour", key.title = title("RR"), plot.title = title("CVA", xlab = "PM2.5", ylab = "Lag"))
+plot(pred1.pm25.ihd, "contour", key.title = title("RR"), plot.title = title("IHD", xlab = "PM2.5", ylab = "Lag"))
+plot(pred1.pm25.resp, "contour", key.title = title("RR"), plot.title = title("Respiratory", xlab = "PM2.5", ylab = "Lag"))
+plot(pred1.pm25.hives, "contour", key.title = title("RR"), plot.title = title("Hives", xlab = "PM2.5", ylab = "Lag"))
+plot(pred1.pm25.ear, "contour", key.title = title("RR"), plot.title = title("Ear", xlab = "PM2.5", ylab = "Lag"))
+
+# (4) Lag- & var-specific associations for respiratory
+plot(pred1.pm25.resp, "slices", var = c(10, 10, 10, 10, 10), lag = c(4:8), col = 4, lwd = 3, ci.arg = list(density = 40, col = grey(0.7)))
+
+# (5) crossreduce() for respiratory
+redall.pm25.resp <- crossreduce(cb1.pm25, mod1.pm25.resp)
+exp(redall.pm25.resp$coefficients)
+redlag6.pm25.resp <- crossreduce(cb1.pm25, mod1.pm25.resp, type = "lag", value = 6)
+redvar10.pm25.resp <- crossreduce(cb1.pm25, mod1.pm25.resp, type = "var", value = 10)
+as.data.frame(cbind("RR" = redvar10.pm25.resp$RRfit, "95LL" = redvar10.pm25.resp$RRlow, "95UL" = redvar10.pm25.resp$RRhigh))
+
+##################################################
+# SENSITIVITY ANALYSES WITH RESPIRATORY DISEASES #
+##################################################
+# 2 D.F.
+mod1.pm25.resp.2df <- glm(resp ~ cb1.pm25 + ns(time, df = 2) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.resp.2df <- crosspred(cb1.pm25, mod1.pm25.resp.2df, at = 4:209, bylag = 0.2, cumul = TRUE)
+jpeg("C:\\Users\\u707-10299\\Downloads\\sens_pm25_2df.jpg")
+par(mfrow = c(2, 1), oma = c(0, 0, 3, 0))
+plot(pred1.pm25.resp.2df, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2))
+plot(pred1.pm25.resp.2df, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR")
+title("Respiratory admissions vs. PM2.5 (2 D.F smoothing spline)", outer = TRUE)
+dev.off()
+
+# 6 D.F.
+mod1.pm25.resp.6df <- glm(resp ~ cb1.pm25 + ns(time, df = 6) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm25.resp.6df <- crosspred(cb1.pm25, mod1.pm25.resp.6df, at = 4:209, bylag = 0.2, cumul = TRUE)
+jpeg("C:\\Users\\u707-10299\\Downloads\\sens_pm25_6df.jpg")
+par(mfrow = c(2, 1), oma = c(0, 0, 3, 0))
+plot(pred1.pm25.resp.6df, "slices", var = 10, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2))
+plot(pred1.pm25.resp.6df, "slices", var = 10, cumul = TRUE, ylab = "Cumulative RR")
+title("Respiratory admissions vs. PM2.5 (6 D.F smoothing spline)", outer = TRUE)
+dev.off()
+
+
+############  PM10 ############
+cb1.pm10 <- crossbasis(data$PM10, lag = 13, argvar = list(type = "lin", cen = 10), arglag = list(type = "poly", degree = 4))
+summary(cb1.pm10)
+
+##### CVA #####
+mod1.pm10.cva <- glm(cva ~ cb1.pm10 + ns(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.cva <- crosspred(cb1.pm10, mod1.pm10.cva, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### IHD #####
+mod1.pm10.ihd <- glm(ihd ~ cb1.pm10 + ns(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.ihd <- crosspred(cb1.pm10, mod1.pm10.ihd, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### RESPIRATORY #####
+mod1.pm10.resp <- glm(resp ~ cb1.pm10 + ns(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.resp <- crosspred(cb1.pm10, mod1.pm10.resp, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### HIVES #####
+mod1.pm10.hives <- glm(hives ~ cb1.pm10 + ns(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.hives <- crosspred(cb1.pm10, mod1.pm10.hives, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### EAR #####
+mod1.pm10.ear <- glm(ear ~ cb1.pm10 + ns(time, df = 5) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.ear <- crosspred(cb1.pm10, mod1.pm10.ear, at = 15:360, bylag = 0.2, cumul = TRUE)
+
+##### PM10 - PLOTS #####
+# NOTE: THE OPTION "VAR = XXX" GIVES THE SPECIFIC EXPOSURE VALUE AT WHICH THE CROSS-PREDICTIONS ARE MADE
+# (1)
+par(mfrow = c(2, 5), oma = c(0, 0, 3, 0))
+plot(pred1.pm10.cva, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "CVA")
+plot(pred1.pm10.ihd, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "IHD")
+plot(pred1.pm10.resp, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Respiratory")
+plot(pred1.pm10.hives, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Hives")
+plot(pred1.pm10.ear, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2), main = "Ear")
+
+plot(pred1.pm10.cva, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "CVA")
+plot(pred1.pm10.ihd, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "IHD")
+plot(pred1.pm10.resp, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "Respiratory")
+plot(pred1.pm10.hives, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "Hives")
+plot(pred1.pm10.ear, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR", main = "Ear")
+
+title("Distributed lag model: RR & cumulative RR for a 10-unit rise in PM10", outer = TRUE)
+
+# (2)
+par(mfrow = c(2, 3), oma = c(0, 0, 3, 0))
+plot(pred1.pm10.cva, xlab = "PM10", zlab = "RR", theta = 30, phi = 40, lphi = 70, main = "CVA")
+plot(pred1.pm10.ihd, xlab = "PM10", zlab = "RR", theta = 30, phi = 40, lphi = 70, main = "IHD")
+plot(pred1.pm10.resp, xlab = "PM10", zlab = "RR", theta = 30, phi = 40, lphi = 70, main = "Respiratory")
+plot(pred1.pm10.hives, xlab = "PM10", zlab = "RR", theta = 30, phi = 40, lphi = 70, main = "Hives")
+plot(pred1.pm10.ear, xlab = "PM10", zlab = "RR", theta = 30, phi = 40, lphi = 70, main = "Ear")
+
+title("Distributed lag model (3-D plot): RR for a 10-unit rise in PM10", outer = TRUE)
+
+# (3)
+plot(pred1.pm10.cva, "contour", key.title = title("RR"), plot.title = title("CVA", xlab = "PM10", ylab = "Lag"))
+plot(pred1.pm10.ihd, "contour", key.title = title("RR"), plot.title = title("IHD", xlab = "PM10", ylab = "Lag"))
+plot(pred1.pm10.resp, "contour", key.title = title("RR"), plot.title = title("Respiratory", xlab = "PM10", ylab = "Lag"))
+plot(pred1.pm10.hives, "contour", key.title = title("RR"), plot.title = title("Hives", xlab = "PM10", ylab = "Lag"))
+plot(pred1.pm10.ear, "contour", key.title = title("RR"), plot.title = title("Ear", xlab = "PM10", ylab = "Lag"))
+
+# (4) Lag- & var-specific associations for respiratory
+plot(pred1.pm10.resp, "slices", var = c(20, 20, 20, 20, 20), lag = c(4:8), col = 4, lwd = 3, ci.arg = list(density = 40, col = grey(0.7)))
+
+# (5) crossreduce() for respiratory
+redall.pm10.resp <- crossreduce(cb1.pm10, mod1.pm10.resp)
+exp(redall.pm10.resp$coefficients)
+redlag6.pm10.resp <- crossreduce(cb1.pm10, mod1.pm10.resp, type = "lag", value = 6)
+redvar20.pm10.resp <- crossreduce(cb1.pm10, mod1.pm10.resp, type = "var", value = 20)
+as.data.frame(cbind("RR" = redvar20.pm10.resp$RRfit, "95LL" = redvar20.pm10.resp$RRlow, "95UL" = redvar20.pm10.resp$RRhigh))
+
+##################################################
+# SENSITIVITY ANALYSES WITH RESPIRATORY DISEASES #
+##################################################
+# 2 D.F.
+mod1.pm10.resp.2df <- glm(resp ~ cb1.pm10 + ns(time, df = 2) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.resp.2df <- crosspred(cb1.pm10, mod1.pm10.resp.2df, at = 15:360, bylag = 0.2, cumul = TRUE)
+jpeg("C:\\Users\\u707-10299\\Downloads\\sens_pm10_2df.jpg")
+par(mfrow = c(2, 1), oma = c(0, 0, 3, 0))
+plot(pred1.pm10.resp.2df, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2))
+plot(pred1.pm10.resp.2df, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR")
+title("Respiratory admissions vs. PM10 (2 D.F smoothing spline)", outer = TRUE)
+dev.off()
+
+# 6 D.F.
+mod1.pm10.resp.6df <- glm(resp ~ cb1.pm10 + ns(time, df = 6) + temp + rh + dow, family = quasipoisson(), data)
+pred1.pm10.resp.6df <- crosspred(cb1.pm10, mod1.pm10.resp.6df, at = 15:360, bylag = 0.2, cumul = TRUE)
+jpeg("C:\\Users\\u707-10299\\Downloads\\sens_pm10_6df.jpg")
+par(mfrow = c(2, 1), oma = c(0, 0, 3, 0))
+plot(pred1.pm10.resp.6df, "slices", var = 20, col = 3, ylab = "RR", ci.arg = list(density = 15, lwd = 2))
+plot(pred1.pm10.resp.6df, "slices", var = 20, cumul = TRUE, ylab = "Cumulative RR")
+title("Respiratory admissions vs. PM10 (6 D.F smoothing spline)", outer = TRUE)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+##########################
+# calculate optimal d.f. #
+##########################
+library(gam) # may not use with library(mgcv) for conflicts, it uses S+ functions (by Trevor Hastie)
+
+# EMPIRICALLY, BY ADDING NO. OF SEASONS + 1 = 4 + 1 = 5
+
+# FROM LITERATURE, BY VARYING D.F. BETWEEN 2 AND 6 (D.F. >= 7 GIVES NON-SIGNIFICANT RESULTS)
+
+# BY USING PENALISED SPLINES (OR NATURAL (CUBIC) SPLINES)
+cva.gam <- gam(cva ~ s(time, 0) + temp + rh + dow, data = data, family = poisson(link = log))
+cva.gam$aic
+pacf(cva.gam$residuals)
+
+ihd.gam <- gam(ihd ~ s(time, 0) + temp + rh + dow, data = data, family = poisson(link = log))
+ihd.gam$aic
+pacf(ihd.gam$residuals)
+
+### note: at 4+ d.f. the aic and pacf becomes stable
+resp.gam <- gam(resp ~ s(time, 5) + temp + rh + dow, data = data, family = poisson(link = log))
+resp.gam$aic
+pacf(resp.gam$residuals)
+resp.gam2 <- gam(resp ~ ns(time, 5) + temp + rh + dow, data = data, family = poisson(link = log))
+resp.gam2$aic
+pacf(resp.gam2$residuals)
+# mgcv() function => however, no s(var, df) function for glm - this also gives same results as above
+resp.glm2 <- glm(resp ~ ns(time, df = 5) + temp + rh + dow, family = poisson(), data)
+resp.glm2$aic
+pacf(resp.glm2$residuals)
+
+hives.gam <- gam(hives ~ s(time, 0) + temp + rh + dow, data = data, family = poisson(link = log))
+hives.gam$aic
+pacf(hives.gam$residuals)
+
+ear.gam <- gam(ear ~ s(time, 0) + temp + rh + dow, data = data, family = poisson(link = log))
+ear.gam$aic
+pacf(ear.gam$residuals)
+
+# BY USING bruto() FUNCTION
+time <- data$time
+cva <- data$cva
+ihd <- data$ihd
+resp <- data$resp
+hives <- data$hives
+ear <- data$ear
+
+bruto(time, cva)$df # d.f. = 9
+bruto(time, ihd)$df # d.f. = 0
+bruto(time, resp)$df # d.f. = 10 ??
+bruto(time, hives)$df # d.f. = 4
+bruto(time, ear)$df # d.f. = 2
+
