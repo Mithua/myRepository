@@ -1,0 +1,30 @@
+# loading libraries
+library(coda)
+library(lattice)
+library(R2WinBUGS)
+
+# file -> change dir of R to that of the modelfile
+
+# data
+N=33
+mean.activity=c(816.875, 369.625, 603, 279.75, 3169.25, 648.5, 261.625, 100, 931.5, 286.5, 944, 4066.25, 326.5, 584.875, 1141, 574.125, 875.375, 569.75, 3980.375, 175.875, 3537.625, 273.125, 1785.875, 469.375, 277.875, 1910.125, 2001.625, 3185.375, 673.625, 2900.5, 4358.375, 1854.5, 285)
+dementia=c(1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0)
+depression=c(0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0)
+autonomy=c(2.5, 4, 3.5, 5, 4.5, 1.5, 2.5, 5, 5, 5, 4.5, 3.5, 6, 5, 5.5, 4, 3.5, 6, 2.5, 5.5, 3, 4, 5, 2.5, 5, 3.5, 0.5, 2.5, 6, 2, 1, 2, 4)
+
+data<-list("N","mean.activity","dementia","depression","autonomy")
+inits<-function(){
+  list(intercept=0.5,beta1=0.1,beta2=0.5,beta3=1.0,beta4=0.2)
+}
+
+poissonmodel=bugs(data,inits,
+                  model.file="R2WinBUGS_Gina1.bug",
+                  parameters=c("expbeta1","expbeta2","expbeta3","expbeta4"),
+                  n.chains=1,n.iter=40000,n.burnin=20000,n.thin=1,
+                  bugs.directory="c:/Program Files/WinBUGS14/",
+                  codaPkg=FALSE)
+
+poissonmodel
+plot(poissonmodel)
+
+# deviance = 23760.0, pD = 4.8, DIC = 23760.6

@@ -1,0 +1,22 @@
+# Poisson cross-sectional model
+model
+{
+	for (i in 1:N) {
+		mean.activity[i] ~ dpois(mu[i]) # stochastic component
+		# log-link and linear predictor
+		log(mu[i]) <- intercept + beta1*dementia[i] + beta2*depression[i] + beta3*autonomy[i] + beta4*dementia[i]*depression[i]
+		}
+
+		# prior distributions for parameter estimates
+		intercept ~ dnorm(0, 0.001)
+		beta1 ~ dnorm(0, 0.001)
+		beta2 ~ dnorm(0, 0.001)
+		beta3 ~ dnorm(0, 0.001)
+		beta4 ~ dnorm(0, 0.001)
+
+		# exponentiated parameter estimates
+		expbeta1 <- exp(beta1)
+		expbeta2 <- exp(beta2)
+		expbeta3 <- exp(beta3)
+		expbeta4 <- exp(beta4)
+}

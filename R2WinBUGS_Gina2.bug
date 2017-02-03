@@ -1,0 +1,24 @@
+# gamma-Poisson cross-sectional model
+model
+{
+	for (i in 1:N) {
+		mean.activity[i] ~ dpois(mu[i]) # stochastic component
+		mu[i] ~ dgamma(alpha, beta[i]) # mu[i] estimate mean.activity[i] & high mean.activity[i] yields low beta[i]
+		# log-link and linear predictor
+		log(beta[i]) <- intercept + beta1*dementia[i] + beta2*depression[i] + beta3*autonomy[i] + beta4*dementia[i]*depression[i]
+		}
+
+		# prior distributions for parameter estimates
+		intercept ~ dnorm(0, 0.001)
+		beta1 ~ dnorm(0, 0.001)
+		beta2 ~ dnorm(0, 0.001)
+		beta3 ~ dnorm(0, 0.001)
+		beta4 ~ dnorm(0, 0.001)
+		alpha ~ dexp(0.1)
+
+		# inverted-exponentiated parameter estimates
+		invexpbeta1 <- 1/exp(beta1)
+		invexpbeta2 <- 1/exp(beta2)
+		invexpbeta3 <- 1/exp(beta3)
+		invexpbeta4 <- 1/exp(beta4)
+}
