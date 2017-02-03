@@ -1,0 +1,73 @@
+#################################################
+### LOAD LIBRARIES ###
+#################################################
+library(ape)
+library(sp)
+library(boot)
+library(Matrix)
+library(lattice)
+library(MASS)
+library(nlme)
+library(maptools)
+library(foreign)
+library(coda)
+library(deldir)
+library(spam)
+library(spdep)
+library(DCluster)
+
+
+#################################################
+### READ DATA ###
+#################################################
+data<-read.table("C:\\Documents and Settings\\sbanerjee\\My Documents\\Mit\\Master Biostatistics\\Hausaufgaben\\Disease Mapping\\Nieuw\\Project\\DB\\Data voor Moran I.txt", header=TRUE, sep="")
+
+
+#################################################
+### COMPUTE MATRIX OF INVERSE DISTANCE WEIGHTS (see http://www.ats.ucla.edu/stat/r/faq/morans_i.htm) ###
+#################################################
+dists<-as.matrix(dist(cbind(data$long, data$lat)))
+dists.inv<-1/dists
+diag(dists.inv)<-0
+
+#################################################
+### GLOBAL MORAN'S I ###
+#################################################
+Moran.I(data$OBS/data$EXP, dists.inv)
+
+#################################################
+### OTHER PROCEDURES ###
+#################################################
+### COMPUTE NEIGHBOUR'S DISTANCES ###
+#################################################
+d<-10
+### d<-50
+neighbours.dist<-dnearneigh(cbind(data$lat, data$long), 0, d, longlat=TRUE)
+col.W<-nb2listw(neighbours.dist, style="W") ### weights
+
+#################################################
+### GLOBAL MORAN'S I ###
+#################################################
+moran(data$OBS/data$EXP, col.W, length(neighbours.dist), Szero(col.W))
+### MORAN'S I UNDER NORMALITY ###
+moran.test(data$OBS/data$EXP, listw=col.W, randomisation=FALSE)
+### EMPIRICAL BAYES MORAN'S I ###
+EBImoran.mc(n=data$OBS, x=data$EXP, listw=col.W, nsim=99)
+### MORAN PLOT ###
+moran.plot(data$OBS/data$EXP, col.W, quiet=TRUE, xlab="rate", ylab="spatially lagged rate", main="Moran plot")
+
+#################################################
+### MC SIMULATIONS ###
+#################################################
+nsim<-99
+set.seed(1234)
+moran.mc(data$OBS/data$EXP, nb2listw(neighbours.dist, style="W"), nsim)
+
+#################################################
+### LOCAL MORAN'S I ###
+#################################################
+localmoran(data$OBS/data$EXP, nb2listw(neighbours.dist, style="W"))
+
+
+
+

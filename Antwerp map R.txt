@@ -1,0 +1,10 @@
+### load library
+library(spdep)
+
+### read data
+Antwerpen<-readShapePoly("C:\\Documents and Settings\\sbanerjee\\My Documents\\Mit\\Master Biostatistics\\Hausaufgaben\\Disease Mapping\\Nieuw\\Project\\DB\\antwerp.shp")
+data<-read.table("C:\\Documents and Settings\\sbanerjee\\My Documents\\Mit\\Master Biostatistics\\Hausaufgaben\\Disease Mapping\\Nieuw\\Project\\DB\\Data voor Moran I.txt", header=TRUE, sep="")
+
+### plot map
+plot(Antwerpen)
+text(coordinates(Antwerpen), label=data$NAME, cex=.5)
