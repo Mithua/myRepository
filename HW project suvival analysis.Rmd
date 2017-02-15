@@ -1,0 +1,224 @@
+---
+title: "Survival analysis with colorectal cancer data"
+author: "Soutrik Banerjee"
+date: "24 January, 2017"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+## Import libraries
+```{r load packages}
+library(reshape2) # rename
+library(tableone)
+library(ggplot2)
+library(dplyr)
+library(sjmisc) # dicho()
+
+library(survival)
+library(survminer)
+library(KMsurv)
+library(survivalROC)
+```
+
+## Import data
+```{r Load data}
+setwd("D:\\HP Pavilion D drive\\Mit\\DSTI\\Survival analysië met R")
+load("ColorectalCaData.RData")
+rm("gene_expression")
+```
+
+## Summarise data
+```{r Table 1}
+summary1 <- CreateTableOne(data = clinical_data[, c(2:9)], strata = "gender")
+print(summary1, exact = "location")
+```
+
+## KM plots
+```{r KM plots}
+fit0 <- survfit(Surv(dfs_time, dfs_event) ~ 1, data = clinical_data)
+ggsurvplot(fit0, color = "#2E9FDF", conf.int = TRUE, break.time.by = 25,
+           risk.table = TRUE)
+
+fit.gender <- survfit(Surv(dfs_time, dfs_event) ~ gender, data = clinical_data)
+ggsurvplot(fit.gender, linetype = "strata", palette = c("#E7B800", "#2E9FDF"),
+           conf.int = TRUE, pval = TRUE, break.time.by = 25, risk.table = TRUE,
+           risk.table.y.text.col = TRUE)
+
+fit.duke <- survfit(Surv(dfs_time, dfs_event) ~ dukes_stage, data = clinical_data)
+ggsurvplot(fit.duke, linetype = "strata", palette = c("#E7B800", "#2E9FDF",
+           "#86AA00"), conf.int = TRUE, pval = TRUE, break.time.by = 25,
+           risk.table = TRUE, risk.table.y.text.col = TRUE)
+
+fit.loc <- survfit(Surv(dfs_time, dfs_event) ~ location, data = clinical_data)
+ggsurvplot(fit.loc, linetype = "strata", palette = c("#E7B800", "#2E9FDF",
+           "#86AA00", "#FF9E29"), conf.int = TRUE, pval = TRUE, break.time.by =
+           25, risk.table = TRUE, risk.table.y.text.col = TRUE)
+
+fit.xrt <- survfit(Surv(dfs_time, dfs_event) ~ adjXRT, data = clinical_data)
+ggsurvplot(fit.xrt, linetype = "strata", palette = c("#E7B800", "#2E9FDF"),
+           conf.int = TRUE, pval = TRUE, break.time.by = 25, risk.table = TRUE,
+           risk.table.y.text.col = TRUE)
+
+fit.ctx <- survfit(Surv(dfs_time, dfs_event) ~ adjCTX, data = clinical_data)
+ggsurvplot(fit.ctx, linetype = "strata", palette = c("#E7B800", "#2E9FDF"),
+           conf.int = TRUE, pval = TRUE, break.time.by = 25, risk.table = TRUE,
+           risk.table.y.text.col = TRUE)
+
+# dichotomise age by median split
+clinical_data$age_diagHigh <- dicho(clinical_data$age_diag, dich.by = "median",
+                                    as.num = FALSE, var.label = NULL, val.labels
+                                    = NULL)
+fit.age <- survfit(Surv(dfs_time, dfs_event) ~ age_diagHigh, data = clinical_data)
+ggsurvplot(fit.age, linetype = "strata", palette = c("#E7B800", "#2E9FDF"),
+           conf.int = TRUE, pval = TRUE, break.time.by = 25, risk.table = TRUE,
+           risk.table.y.text.col = TRUE)
+```
+
+## Median (q50) survival time
+```{r Median survival time}
+survfit(Surv(dfs_time, dfs_event) ~ 1, data = clinical_data)
+```
+
+## Cox PH regression
+```{r Cox PH model}
+mod1 <- coxph(Surv(dfs_time, dfs_event) ~ location + dukes_stage + age_diagHigh +
+              gender + adjXRT + adjCTX, data = clinical_data) # Efron default
+summary(mod1)
+```
+
+## Cox PH model assumption
+```{r Cox PH model check & Schoenfeld residuals}
+mod1.zph <- cox.zph(mod1, transform = 'log')
+mod1.zph
+
+par(mfrow = c(3, 3))
+plot(mod1.zph)
+```
+
+## Cox PH plots in the full model
+```{r strata(predictor.variable)}
+loc.mod <- coxph(Surv(dfs_time, dfs_event) ~ strata(location) + dukes_stage +
+                 age_diagHigh + gender + adjXRT + adjCTX, data = clinical_data)
+duke.mod <- coxph(Surv(dfs_time, dfs_event) ~ location + strata(dukes_stage) +
+                  age_diagHigh + gender + adjXRT + adjCTX, data = clinical_data)
+age.mod <- coxph(Surv(dfs_time, dfs_event) ~ location + dukes_stage +
+                 strata(age_diagHigh) + gender + adjXRT + adjCTX,
+                 data = clinical_data)
+gen.mod <- coxph(Surv(dfs_time, dfs_event) ~ location + dukes_stage +
+                 age_diagHigh + strata(gender) + adjXRT + adjCTX,
+                 data = clinical_data)
+xrt.mod <- coxph(Surv(dfs_time, dfs_event) ~ location + dukes_stage +
+                 age_diagHigh + gender + strata(adjXRT) + adjCTX,
+                 data = clinical_data)
+ctx.mod <- coxph(Surv(dfs_time, dfs_event) ~ location + dukes_stage +
+                 age_diagHigh + gender + adjXRT + strata(adjCTX),
+                 data = clinical_data)
+
+par(mfrow = c(3, 2))
+plot(survfit(loc.mod), fun = "cloglog", lty = 1:4, col = 1:4, ylab =
+     "log(-log(Survival))", xlab = "log(time)", main = "PH for location")
+legend("topleft", legend = c("Rectum", "Colon", "Left", "Right"), lty = 1:4, col = 1:4)
+plot(survfit(duke.mod), fun = "cloglog", lty = 1:3, col = 1:3, ylab =
+     "log(-log(Survival))", xlab = "log(time)", main = "PH for Duke's staging")
+legend("topleft", legend = c("A", "B", "C"), lty = 1:3, col = 1:3)
+plot(survfit(age.mod), fun = "cloglog", lty = 1:2, col = 1:2, ylab =
+     "log(-log(Survival))", xlab = "log(time)", main = "PH for age at diagnosis")
+legend("topleft", legend = c("<=67", ">67"), lty = 1:2, col = 1:2)
+plot(survfit(gen.mod), fun = "cloglog", lty = 1:2, col = 1:2, ylab =
+     "log(-log(Survival))", xlab = "log(time)", main = "PH for gender")
+legend("topleft", legend = c("F", "M"), lty = 1:2, col = 1:2)
+plot(survfit(xrt.mod), fun = "cloglog", lty = 1:2, col = 1:2, ylab =
+     "log(-log(Survival))", xlab = "log(time)", main = "PH for radioTx")
+legend("topleft", legend = c("No", "Yes"), lty = 1:2, col = 1:2)
+plot(survfit(ctx.mod), fun = "cloglog", lty = 1:2, col = 1:2, ylab =
+     "log(-log(Survival))", xlab = "log(time)", main = "PH for chemoTx")
+legend("topleft", legend = c("No", "Yes"), lty = 1:2, col = 1:2)
+```
+
+## Linearity of log(hazard) for continuous variables
+```{r Martinagel residuals for age at diagnosis, linear.predictor}
+resMart <- residuals(mod1, type = "martingale")
+
+par(mfrow = c(1, 2))
+plot(clinical_data$age_diag, resMart, main = "Martingale residuals for age at
+     diagnosis", xlab = "Age at diagnosis", ylab = "Residuals", pch = 16)
+lines(lowess(clinical_data$age_diag, resMart), lwd = 2)
+plot(mod1$linear.predictors, resMart, main = "Martingale residuals for linear
+     predictors", xlab = "Linear predictors", ylab = "Residuals", pch = 16)
+lines(lowess(mod1$linear.predictors, resMart), lwd = 2)
+```
+
+## 'Univariate' prediction Duke's staging, adjuvant XRT
+```{r Duke's staging, adjuvant XRT}
+mod2 <- coxph(Surv(dfs_time, dfs_event) ~ dukes_stage, data = clinical_data)
+mod2.pred <- survfit(mod2, newdata = data.frame(dukes_stage =
+                     factor(c("A", "B", "C"), levels =
+                     levels(clinical_data$dukes_stage)), type = "aalen", se.fit =
+                     TRUE))
+mod3 <- coxph(Surv(dfs_time, dfs_event) ~ adjXRT, data = clinical_data)
+mod3.pred <- survfit(mod3, newdata = data.frame(adjXRT =
+                     factor(c("N", "Y"), levels =
+                     levels(clinical_data$adjXRT)), type = "aalen", se.fit =
+                     TRUE))
+
+par(mfrow = c(1, 2))
+plot(mod2.pred, lty = 1:3, col = 1:3, ylab = "S(t)", xlab = "time", main =
+     "Nelson-Aalen Prediction for Duke's staging")
+legend("topright", legend = c("A", "B", "C"), lty = 1:3, col = 1:3)
+plot(mod3.pred, lty = 1:2, col = 1:2, ylab = "S(t)", xlab = "time", main =
+     "Nelson-Aalen Prediction for adjuvant XRT")
+legend("topright", legend = c("N", "Y"), lty = 1:2, col = 1:2)
+```
+
+## Influential observations
+```{r dfbetas}
+dfbetas <- residuals(mod1, type = "dfbetas")
+
+par(mfrow = c(3, 3), cex.main = 1.4, cex.lab = 1.4)
+plot(dfbetas[, 1], type = "h", main = "Colon", ylab = "DfBETAS", lwd = 2)
+plot(dfbetas[, 2], type = "h", main = "Left", ylab = "DfBETAS", lwd = 2)
+plot(dfbetas[, 3], type = "h", main = "Right", ylab = "DfBETAS", lwd = 2)
+plot(dfbetas[, 4], type = "h", main = "Duke B", ylab = "DfBETAS", lwd = 2)
+plot(dfbetas[, 5], type = "h", main = "Duke C", ylab = "DfBETAS", lwd = 2)
+plot(dfbetas[, 6], type = "h", main = "Age high", ylab = "DfBETAS", lwd = 2)
+plot(dfbetas[, 7], type = "h", main = "Male", ylab = "DfBETAS", lwd = 2)
+plot(dfbetas[, 8], type = "h", main = "adj. XRT", ylab = "DfBETAS", lwd = 2)
+plot(dfbetas[, 9], type = "h", main = "adj. CTX", ylab = "DfBETAS", lwd = 2)
+```
+
+## Parametric survival analysis
+```{r Parametric models}
+mod.expo <- survreg(Surv(dfs_time, dfs_event) ~ location + dukes_stage +
+                    age_diagHigh + gender + adjXRT + adjCTX, dist="exponential",
+                    data = clinical_data)
+mod.weib <- survreg(Surv(dfs_time, dfs_event) ~ location + dukes_stage +
+                    age_diagHigh + gender + adjXRT + adjCTX, dist="weibull",
+                    data = clinical_data)
+mod.lnorm <- survreg(Surv(dfs_time, dfs_event) ~ location + dukes_stage +
+                    age_diagHigh + gender + adjXRT + adjCTX, dist="lognormal",
+                    data = clinical_data)
+mod.logit <- survreg(Surv(dfs_time, dfs_event) ~ location + dukes_stage +
+                    age_diagHigh + gender + adjXRT + adjCTX, dist="logistic",
+                    data = clinical_data)
+mod.llogit <- survreg(Surv(dfs_time, dfs_event) ~ location + dukes_stage +
+                    age_diagHigh + gender + adjXRT + adjCTX, dist="loglogistic",
+                    data = clinical_data)
+
+# compare models
+param.mod <- list(mod.expo, mod.weib, mod.lnorm, mod.logit, mod.llogit)
+lapply(param.mod, summary)
+sapply(param.mod, AIC) # the lower, the better
+
+# parsimonious model
+mod.aic <- stepAIC(mod.weib, direction = "backward") # backward stepwise default
+summary(mod.aic)
+```
+
+## Survival ROC for continuous variable
+```{r Survival ROCfor age at diagnosis}
+age.ROC <- survivalROC(Stime = clinical_data$dfs_time, status =
+                       clinical_data$dfs_event, marker = clinical_data$age_diag,
+                       predict.time = 125, method = "KM")
+age.ROC # AUC ~ 0.4 !!!
+```
