@@ -1,0 +1,438 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.1' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     16450,        430]
+NotebookOptionsPosition[     15176,        390]
+NotebookOutlinePosition[     15523,        405]
+CellTagsIndexPosition[     15480,        402]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[TextData[StyleBox["zu Hause arbeiten mit meiner Thesis Datum",
+ FontColor->RGBColor[1, 0.5, 0.5]]], "Text",
+ CellChangeTimes->{{3.637257614846804*^9, 3.637257639728848*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"ClearAll", "[", "\"\<Global`*\>\"", "]"}], ";"}]], "Input",
+ CellChangeTimes->{{3.637257196413268*^9, 3.63725720284048*^9}}],
+
+Cell[BoxData[
+ RowBox[{"SetDirectory", "[", 
+  "\"\<D:\\\\HP Pavilion D drive\\\\Mit\\\\Thesis MASS\\\\Thesis rough work\>\
+\"", "]"}]], "Input",
+ CellChangeTimes->{
+  3.637257244133752*^9, {3.637257313074273*^9, 3.6372573214358883`*^9}, {
+   3.637257470085349*^9, 3.637257474968158*^9}, 3.6969283406974907`*^9, 
+   3.696928406111183*^9}],
+
+Cell[BoxData[
+ RowBox[{"FileNames", "[", "]"}]], "Input",
+ CellChangeTimes->{{3.6372574502577143`*^9, 3.637257455733324*^9}}],
+
+Cell[TextData[StyleBox["Data import kora",
+ FontColor->RGBColor[1, 0.5, 0.5]]], "Text",
+ CellChangeTimes->{{3.637257704913762*^9, 3.637257707456567*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"data", "=", 
+   RowBox[{"Import", "[", "\"\<ActimetryClassification.csv\>\"", "]"}]}], 
+  ";"}]], "Input",
+ CellChangeTimes->{
+  3.6372577180333853`*^9, {3.6372577783586917`*^9, 3.6372578198547645`*^9}, {
+   3.640628232816631*^9, 3.6406282418490467`*^9}, {3.696928432847347*^9, 
+   3.696928435782651*^9}}],
+
+Cell[BoxData[
+ RowBox[{"data", "//", 
+  RowBox[{
+   RowBox[{"Short", "[", 
+    RowBox[{"#", ",", " ", "3"}], "]"}], "&"}]}]], "Input",
+ CellChangeTimes->{
+  3.637258483994731*^9, {3.637259032895918*^9, 3.637259048511545*^9}, {
+   3.6969335248799057`*^9, 3.696933525365665*^9}, {3.6969336129793243`*^9, 
+   3.696933613414462*^9}}],
+
+Cell[TextData[StyleBox["For Normalisation of two variables and get other two \
+variables",
+ FontColor->RGBColor[1, 0.5, 0.5]]], "Text",
+ CellChangeTimes->{{3.6969298765654507`*^9, 3.6969299024806976`*^9}, {
+  3.696930884701597*^9, 3.6969308866652927`*^9}, {3.6969332518586855`*^9, 
+  3.6969332543266306`*^9}, {3.6969365963197484`*^9, 3.6969366091262355`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"Dementia", "=", 
+   RowBox[{"data", "[", 
+    RowBox[{"[", 
+     RowBox[{
+      RowBox[{"2", ";;", "353"}], ",", "2"}], "]"}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Freq01", "=", 
+   RowBox[{"N", "[", 
+    RowBox[{"Rescale", "[", 
+     RowBox[{"data", "[", 
+      RowBox[{"[", 
+       RowBox[{
+        RowBox[{"2", ";;", "353"}], ",", "3"}], "]"}], "]"}], "]"}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Dur01", "=", 
+   RowBox[{"N", "[", 
+    RowBox[{"Rescale", "[", 
+     RowBox[{"data", "[", 
+      RowBox[{"[", 
+       RowBox[{
+        RowBox[{"2", ";;", "353"}], ",", "4"}], "]"}], "]"}], "]"}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Expert2cat", "=", 
+   RowBox[{"data", "[", 
+    RowBox[{"[", 
+     RowBox[{
+      RowBox[{"2", ";;", "353"}], ",", "7"}], "]"}], "]"}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.696929977105513*^9, 3.6969300050273347`*^9}, {
+   3.696930233422415*^9, 3.69693036645792*^9}, 3.696930407316983*^9, {
+   3.6969304493282757`*^9, 3.6969304579920173`*^9}, {3.696930497536072*^9, 
+   3.6969305534503098`*^9}, {3.696930902807213*^9, 3.696931038731962*^9}, {
+   3.6969310907628555`*^9, 3.696931157790506*^9}, 3.6969315996910753`*^9, {
+   3.696931643562477*^9, 3.696931759037575*^9}, {3.696931823771843*^9, 
+   3.696931829242443*^9}, {3.696932159333314*^9, 3.69693224631464*^9}, {
+   3.6969331057264023`*^9, 3.696933130162654*^9}, 3.6969331924174433`*^9, 
+   3.6969332458808675`*^9, {3.69693339656475*^9, 3.696933405094438*^9}, {
+   3.6969334537618113`*^9, 3.6969334835784445`*^9}, {3.6969335992933655`*^9, 
+   3.696933600442243*^9}, {3.696933657945751*^9, 3.696933672449191*^9}, {
+   3.6969337069026084`*^9, 3.696933911631749*^9}, {3.696933943176426*^9, 
+   3.6969339705471125`*^9}, 3.6969340465722513`*^9, {3.696934912274376*^9, 
+   3.6969349695057116`*^9}, {3.6969350053186073`*^9, 3.696935123521105*^9}, {
+   3.6969351544049997`*^9, 3.696935247486342*^9}, {3.696936686643031*^9, 
+   3.6969366919823055`*^9}, {3.696936925014859*^9, 3.696936926664226*^9}}],
+
+Cell[BoxData[{
+ RowBox[{"Length", "[", "Dementia", "]"}], "\[IndentingNewLine]", 
+ RowBox[{"Mean", "[", "Freq01", "]"}], "\[IndentingNewLine]", 
+ RowBox[{"Mean", "[", "Dur01", "]"}], "\[IndentingNewLine]", 
+ RowBox[{"Length", "[", "Expert2cat", "]"}], "\[IndentingNewLine]", 
+ RowBox[{"Dementia", "//", 
+  RowBox[{
+   RowBox[{"Short", "[", 
+    RowBox[{"#", ",", "0.5"}], "]"}], "&"}]}], "\[IndentingNewLine]", 
+ RowBox[{"Freq01", "//", 
+  RowBox[{
+   RowBox[{"Short", "[", 
+    RowBox[{"#", ",", "1"}], "]"}], "&"}]}], "\[IndentingNewLine]", 
+ RowBox[{"Dur01", "//", 
+  RowBox[{
+   RowBox[{"Short", "[", 
+    RowBox[{"#", ",", "1"}], "]"}], "&"}]}], "\[IndentingNewLine]", 
+ RowBox[{"Expert2cat", "//", 
+  RowBox[{
+   RowBox[{"Short", "[", 
+    RowBox[{"#", ",", "0.5"}], "]"}], "&"}]}]}], "Input",
+ CellChangeTimes->{3.696936935715039*^9}],
+
+Cell[TextData[{
+ StyleBox["X & response",
+  FontWeight->"Bold",
+  FontColor->RGBColor[1, 0.5, 0.5]],
+ StyleBox[" variable matrix select kora",
+  FontColor->RGBColor[1, 0.5, 0.5]]
+}], "Text",
+ CellChangeTimes->{{3.6372582897743897`*^9, 3.6372582981672044`*^9}, {
+   3.637258425853429*^9, 3.6372584285210333`*^9}, {3.637259405892573*^9, 
+   3.637259408279377*^9}, {3.6406081127686167`*^9, 3.64060812948864*^9}, {
+   3.6406114330908146`*^9, 3.6406114334708147`*^9}, 3.6406242608954277`*^9, {
+   3.696930069652835*^9, 3.6969300994412766`*^9}, {3.6969301381730213`*^9, 
+   3.6969301862447042`*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"mat", "=", 
+   RowBox[{"Transpose", "[", 
+    RowBox[{"{", 
+     RowBox[{"Dementia", ",", "Freq01", ",", "Dur01"}], "}"}], "]"}]}], 
+  ";"}]], "Input",
+ CellChangeTimes->{{3.637258317636039*^9, 3.63725841508941*^9}, {
+  3.637258855726406*^9, 3.637258858222411*^9}, {3.637259417077792*^9, 
+  3.6372594180449944`*^9}, {3.640608245098802*^9, 3.6406082459688034`*^9}, {
+  3.6969287049741073`*^9, 3.696928705621809*^9}, {3.6969353099050975`*^9, 
+  3.6969353141938944`*^9}, {3.696936845984233*^9, 3.6969369025621815`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"mat", "//", 
+  RowBox[{
+   RowBox[{"Short", "[", 
+    RowBox[{"#", ",", " ", "2"}], "]"}], "&"}]}]], "Input",
+ CellChangeTimes->{{3.6372584663199*^9, 3.637258477380319*^9}, {
+   3.6372589935682487`*^9, 3.637259014831086*^9}, {3.696936972768633*^9, 
+   3.696936973232296*^9}, 3.696937335900114*^9}],
+
+Cell[TextData[{
+ StyleBox["Create a training dataset ",
+  FontColor->RGBColor[1, 0.5, 0.5]],
+ StyleBox["excluding",
+  FontVariations->{"Underline"->True},
+  FontColor->RGBColor[1, 0.5, 0.5]],
+ StyleBox[" header -> label variable",
+  FontColor->RGBColor[1, 0.5, 0.5]]
+}], "Text",
+ CellChangeTimes->{{3.6969373512705417`*^9, 3.696937400264849*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"trainingData", "=", 
+   RowBox[{"MapThread", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"#1", "\[Rule]", "#2"}], "&"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"mat", ",", "Expert2cat"}], "}"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"trainingData", "//", 
+  RowBox[{
+   RowBox[{"Short", "[", 
+    RowBox[{"#", ",", "2"}], "]"}], "&"}]}]}], "Input",
+ CellChangeTimes->{{3.6969374150018816`*^9, 3.6969374281618505`*^9}, {
+  3.6969374600086575`*^9, 3.6969375559300222`*^9}}],
+
+Cell[TextData[StyleBox["Classification",
+ FontWeight->"Bold",
+ FontColor->RGBColor[0.6, 0.4, 0.2]]], "Text",
+ CellChangeTimes->{{3.6406084410690765`*^9, 3.6406084575490994`*^9}, {
+  3.640612268619981*^9, 3.6406122922696223`*^9}, {3.6406185179553146`*^9, 
+  3.6406185196089177`*^9}, {3.6406187676849537`*^9, 3.6406187693385563`*^9}, {
+  3.640618813018633*^9, 3.640618815514638*^9}, {3.6969371519013834`*^9, 
+  3.6969371528875756`*^9}}],
+
+Cell[TextData[StyleBox["Na\[IDoubleDot]ve Bayes",
+ FontColor->RGBColor[0, 0, 1]]], "Text",
+ CellChangeTimes->{{3.6969384754997377`*^9, 3.6969384852292027`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"nbc", "=", 
+   RowBox[{"Classify", "[", 
+    RowBox[{"trainingData", ",", 
+     RowBox[{"Method", "\[Rule]", "\"\<NaiveBayes\>\""}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ClassifierInformation", "[", "nbc", "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"nbc", ",", "trainingData", ",", "\"\<Accuracy\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"nbc", ",", "trainingData", ",", "\"\<FScore\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"nbc", ",", "trainingData", ",", "\"\<ConfusionMatrixPlot\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"nbc", ",", "trainingData", ",", "\"\<AccuracyRejectionPlot\>\""}], 
+  "]"}]}], "Input",
+ CellChangeTimes->{
+  3.6969378577294536`*^9, {3.696938133678213*^9, 3.6969381471987314`*^9}, 
+   3.6969382721830816`*^9, {3.696938359174755*^9, 3.696938440142004*^9}, {
+   3.6969385648518105`*^9, 3.696938593359455*^9}, {3.696938750372121*^9, 
+   3.6969387537281933`*^9}}],
+
+Cell[TextData[StyleBox["Logistic regression",
+ FontColor->RGBColor[0, 0, 1]]], "Text",
+ CellChangeTimes->{{3.6969390943067255`*^9, 3.6969391037598176`*^9}, {
+  3.6969392565764627`*^9, 3.696939256708271*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"logitc", "=", 
+   RowBox[{"Classify", "[", "trainingData", "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ClassifierInformation", "[", "logitc", "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"logitc", ",", "trainingData", ",", "\"\<Accuracy\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"logitc", ",", "trainingData", ",", "\"\<FScore\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"logitc", ",", "trainingData", ",", "\"\<ConfusionMatrixPlot\>\""}],
+   "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{
+  "logitc", ",", "trainingData", ",", "\"\<AccuracyRejectionPlot\>\""}], 
+  "]"}]}], "Input",
+ CellChangeTimes->{{3.6969391185578556`*^9, 3.6969391384360867`*^9}}],
+
+Cell[TextData[StyleBox["Nearest neighbours",
+ FontColor->RGBColor[0, 0, 1]]], "Text",
+ CellChangeTimes->{{3.6969392385450068`*^9, 3.696939249965868*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"knnc", "=", 
+   RowBox[{"Classify", "[", 
+    RowBox[{"trainingData", ",", 
+     RowBox[{"Method", "\[Rule]", "\"\<NearestNeighbors\>\""}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ClassifierInformation", "[", "knnc", "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"knnc", ",", "trainingData", ",", "\"\<Accuracy\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"knnc", ",", "trainingData", ",", "\"\<FScore\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"knnc", ",", "trainingData", ",", "\"\<ConfusionMatrixPlot\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"knnc", ",", "trainingData", ",", "\"\<AccuracyRejectionPlot\>\""}],
+   "]"}]}], "Input",
+ CellChangeTimes->{{3.696939283817867*^9, 3.696939301455741*^9}}],
+
+Cell[TextData[StyleBox["Support Vector Machine",
+ FontColor->RGBColor[0, 0, 1]]], "Text",
+ CellChangeTimes->{{3.696939402505705*^9, 3.696939413455078*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"svmc", "=", 
+   RowBox[{"Classify", "[", 
+    RowBox[{"trainingData", ",", 
+     RowBox[{"Method", "\[Rule]", "\"\<SupportVectorMachine\>\""}]}], "]"}]}],
+   ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ClassifierInformation", "[", "svmc", "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"svmc", ",", "trainingData", ",", "\"\<Accuracy\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"svmc", ",", "trainingData", ",", "\"\<FScore\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"svmc", ",", "trainingData", ",", "\"\<ConfusionMatrixPlot\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"svmc", ",", "trainingData", ",", "\"\<AccuracyRejectionPlot\>\""}],
+   "]"}]}], "Input",
+ CellChangeTimes->{{3.6969394438423195`*^9, 3.696939459200017*^9}}],
+
+Cell[TextData[StyleBox["Random forest",
+ FontColor->RGBColor[0, 0, 1]]], "Text",
+ CellChangeTimes->{{3.696939744665672*^9, 3.6969397518091755`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"rfc", "=", 
+   RowBox[{"Classify", "[", 
+    RowBox[{"trainingData", ",", 
+     RowBox[{"Method", "\[Rule]", "\"\<RandomForest\>\""}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ClassifierInformation", "[", "rfc", "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"rfc", ",", "trainingData", ",", "\"\<Accuracy\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"rfc", ",", "trainingData", ",", "\"\<FScore\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"rfc", ",", "trainingData", ",", "\"\<ConfusionMatrixPlot\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"rfc", ",", "trainingData", ",", "\"\<AccuracyRejectionPlot\>\""}], 
+  "]"}]}], "Input",
+ CellChangeTimes->{{3.6969397715511885`*^9, 3.696939790660993*^9}}],
+
+Cell[TextData[StyleBox["Neural net",
+ FontColor->RGBColor[0, 0, 1]]], "Text",
+ CellChangeTimes->{{3.696939868372041*^9, 3.6969398732787843`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"annc", "=", 
+   RowBox[{"Classify", "[", 
+    RowBox[{"trainingData", ",", 
+     RowBox[{"Method", "\[Rule]", "\"\<NeuralNetwork\>\""}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ClassifierInformation", "[", "annc", "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"annc", ",", "trainingData", ",", "\"\<Accuracy\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"annc", ",", "trainingData", ",", "\"\<FScore\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"annc", ",", "trainingData", ",", "\"\<ConfusionMatrixPlot\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"ClassifierMeasurements", "[", 
+  RowBox[{"annc", ",", "trainingData", ",", "\"\<AccuracyRejectionPlot\>\""}],
+   "]"}]}], "Input",
+ CellChangeTimes->{{3.6969399245713196`*^9, 3.6969399538463197`*^9}}]
+},
+WindowSize->{759, 606},
+WindowMargins->{{Automatic, 56}, {77, Automatic}},
+FrontEndVersion->"11.0 for Microsoft Windows (64-bit) (September 21, 2016)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 178, 2, 30, "Text"],
+Cell[739, 24, 159, 3, 30, "Input"],
+Cell[901, 29, 338, 7, 30, "Input"],
+Cell[1242, 38, 125, 2, 30, "Input"],
+Cell[1370, 42, 153, 2, 30, "Text"],
+Cell[1526, 46, 340, 8, 30, "Input"],
+Cell[1869, 56, 329, 8, 30, "Input"],
+Cell[2201, 66, 359, 5, 30, "Text"],
+Cell[2563, 73, 2096, 47, 88, "Input"],
+Cell[4662, 122, 841, 21, 164, "Input"],
+Cell[5506, 145, 593, 12, 30, "Text"],
+Cell[6102, 159, 551, 11, 30, "Input"],
+Cell[6656, 172, 321, 7, 30, "Input"],
+Cell[6980, 181, 346, 9, 30, "Text"],
+Cell[7329, 192, 526, 15, 50, "Input"],
+Cell[7858, 209, 434, 7, 30, "Text"],
+Cell[8295, 218, 160, 2, 30, "Text"],
+Cell[8458, 222, 1153, 26, 126, "Input"],
+Cell[9614, 250, 207, 3, 30, "Text"],
+Cell[9824, 255, 892, 21, 126, "Input"],
+Cell[10719, 278, 153, 2, 30, "Text"],
+Cell[10875, 282, 958, 22, 126, "Input"],
+Cell[11836, 306, 155, 2, 30, "Text"],
+Cell[11994, 310, 964, 22, 126, "Input"],
+Cell[12961, 334, 148, 2, 30, "Text"],
+Cell[13112, 338, 950, 22, 126, "Input"],
+Cell[14065, 362, 145, 2, 30, "Text"],
+Cell[14213, 366, 959, 22, 126, "Input"]
+}
+]
+*)
+
