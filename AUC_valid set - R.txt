@@ -1,0 +1,24 @@
+Area under the ROC curve for the rpart model on ActimetryClassification.csv [validate] is 0.8023
+
+Rattle timestamp: 2017-02-20 21:44:02 Soutrik Banerjee
+======================================================================
+Area under the ROC curve for the ada model on ActimetryClassification.csv [validate] is 0.8941
+
+Rattle timestamp: 2017-02-20 21:44:05 Soutrik Banerjee
+======================================================================
+Area under the ROC curve for the rf model on ActimetryClassification.csv [validate] is 0.8682
+
+Rattle timestamp: 2017-02-20 21:44:09 Soutrik Banerjee
+======================================================================
+Area under the ROC curve for the ksvm model on ActimetryClassification.csv [validate] is 0.9018
+
+Rattle timestamp: 2017-02-20 21:44:12 Soutrik Banerjee
+======================================================================
+Area under the ROC curve for the glm model on ActimetryClassification.csv [validate] is 0.9406
+
+Rattle timestamp: 2017-02-20 21:44:16 Soutrik Banerjee
+======================================================================
+Area under the ROC curve for the nnet model on ActimetryClassification.csv [validate] is 0.9406
+
+Rattle timestamp: 2017-02-20 21:44:20 Soutrik Banerjee
+======================================================================
