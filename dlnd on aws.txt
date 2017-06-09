@@ -1,0 +1,22 @@
+1. Launch a new instance
+	a. Select g2.2xlarge instance from udacity community AMIs
+	b. Storage type -> 32 GiB
+	c. Security groep -> 'Jupyter' create nieuw or use existing if already created, custom TCP/IP - port 8888 - anywhere
+	d. Do not generate a key pair for access
+	e. Launch instance -> view instance if 2/2 tests passed in status checks
+2. Open putty.exe and with port 22 - 'IP address of the instance, e.g., 54.93.210.23'
+3. In the putty console, use $ login as 'udacity' -> click 'yes' and $ password as 'udacity'
+	a. Change password in the command prompt $ passwd -> enter oud password 'udacity' -> enter nieuw password '~' -> re-enter nieuw password '~'
+	b. Update using commands with or without password $ sudo apt-get upgrade
+	c. $ sudo apt-get update
+	d. $ conda list
+	e. $ conda env list -> root & dl are present
+	f. $ source activate dl -> enter (dl) environment [(optional) at the end: $ deactivate dl]
+	g. (dl) $ conda list
+	h. (dl) $ conda update --all -> click 'y'
+	i. (dl) $ pip install keras tensorflow tflearn <... package names ...>
+	j. (dl) $ jupyter notebook
+4. In the Chrome browser use the IP address of the running instance:port no. , e.g., 54.93.210.23:8888, do NOT close the putty console while the Jupyter notebook is running on the AWS cloud server instance
+5. Upload files to, create folders in the Jupyter notebook as required
+6. While running the .ipynb file, change the kernel first to (dl)
+7. After the outputs saved / downloaded locally, TERMINATE the instance; check billing info / CREDITS later
