@@ -1,0 +1,27 @@
+# AWS - create an Ubuntu instance and all necessary steps to login via putty terminal on Windows
+
+$ sudo apt-get upgrade
+$ sudo apt-get update
+
+$ sudo apt install python3
+$ sudo apt install python3-pip
+$ sudo apt install python3-numpy
+$ sudo apt install python3-scipy
+$ sudo apt install python3-matplotlib
+$ sudo apt install python3-sklearn
+$ sudo apt install python3-pandas
+
+$ python3
+
+>>> import numpy as np
+>>> import scipy as sc
+>>> import matplotlib.pyplot as plt
+>>> import pandas as pd
+>>> from sklearn.datasets import load_iris
+>>> iris = load_iris()
+>>> print(iris.data[:10, :])
+>>> print(iris.target)
+>>> from sklearn.cross_validation import cross_val_score
+>>> from sklearn.tree import DecisionTreeClassfier
+>>> clf = DecisionTreeClassfier(random_state = 0)
+>>> cross_val_score(clf, iris.data, iris.target, cv = 10)
