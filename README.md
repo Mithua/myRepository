@@ -1,3 +1,4 @@
 # myRepository
 (My GitHub Repository)
-Different examples, codes in different software that are opensource are kept in the BRANCHes of myRepository.
+### Description
+Different worked out examples (outputs, visualisations, tables), codes written in different software that are opensource projects, are all kept under the different the BRANCHES of myRepository.
