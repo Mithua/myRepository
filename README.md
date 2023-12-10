@@ -1,2 +1,3 @@
 # myRepository
-Longitudinal-data-analysis in myRepository
+Longitudinal-data-analysis
+Longitudinal-data-analysis under `myRepository`
